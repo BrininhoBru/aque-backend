@@ -18,10 +18,11 @@
             </encoder>
         </appender>
 
-        <logger name="com.aque" level="DEBUG"/>
-        <logger name="org.flywaydb" level="DEBUG"/>
-        <logger name="org.springframework.jdbc" level="DEBUG"/>
-        <logger name="org.hibernate.SQL" level="DEBUG"/>
+        <logger name="com.aque" level="INFO"/>
+        <logger name="org.flywaydb" level="INFO"/>
+        <logger name="org.springframework.jdbc" level="INFO"/>
+        <logger name="org.hibernate.SQL" level="INFO"/>
+        <logger name="org.springdoc" level="INFO"/>
 
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
