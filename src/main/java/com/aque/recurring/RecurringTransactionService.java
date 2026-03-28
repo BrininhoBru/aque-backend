@@ -18,6 +18,7 @@ public class RecurringTransactionService {
 
     private final RecurringTransactionRepository recurringRepository;
     private final CategoryRepository categoryRepository;
+    private final RecurringTransactionJob recurringTransactionJob;
 
     public List<RecurringTransactionResponse> findAll(Boolean active) {
         List<RecurringTransaction> list = active != null
@@ -66,6 +67,10 @@ public class RecurringTransactionService {
                         "Lançamento recorrente não encontrado",
                         HttpStatus.NOT_FOUND
                 ));
+    }
+
+    public int generate(int year, int month) {
+        return recurringTransactionJob.generate(year, month);
     }
 
     private Category findCategory(UUID categoryId) {

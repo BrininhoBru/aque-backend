@@ -52,8 +52,7 @@ public class RecurringTransactionController {
             }
     )
     @PostMapping
-    public ResponseEntity<RecurringTransactionResponse> create(
-            @Valid @RequestBody RecurringTransactionRequest request) {
+    public ResponseEntity<RecurringTransactionResponse> create(@Valid @RequestBody RecurringTransactionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(recurringService.create(request));
     }
@@ -88,5 +87,20 @@ public class RecurringTransactionController {
             @Parameter(description = "ID do recorrente") @PathVariable UUID id) {
         recurringService.deactivate(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "Forçar geração de recorrentes",
+            description = "Gera instâncias dos recorrentes ativos para o mês/ano informado. Idempotente.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Geração concluída com sucesso")
+            }
+    )
+    @PostMapping("/generate/{year}/{month}")
+    public ResponseEntity<String> generate(
+            @Parameter(description = "Ano") @PathVariable int year,
+            @Parameter(description = "Mês (1-12)") @PathVariable int month) {
+        int count = recurringService.generate(year, month);
+        return ResponseEntity.ok(count + " instâncias geradas para " + month + "/" + year);
     }
 }
