@@ -24,16 +24,11 @@ FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
-# Copia o JAR gerado no stage anterior
 COPY --from=build /app/target/*.jar app.jar
 
-# Porta da aplicação
 EXPOSE 8080
 
 # Flags de memória adequadas para o Raspberry Pi 3B (1GB RAM)
-# -Xmx256m  → máximo de heap para o Spring Boot
-# -Xms128m  → heap inicial
-# -XX:+UseSerialGC → GC mais leve para dispositivos com pouca RAM
 ENTRYPOINT ["java", \
   "-Xmx256m", \
   "-Xms128m", \
