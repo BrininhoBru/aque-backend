@@ -31,19 +31,19 @@ O schema do banco é gerenciado via **Flyway** com migrations versionadas. Os te
 
 ## 🛠️ Tecnologias
 
-| Tecnologia | Versão |
-|------------|--------|
-| Java | 25 |
-| Spring Boot | 4.0.0 |
-| Spring Security | 7.0.0 |
-| Spring Data JPA | 4.0.0 |
-| PostgreSQL | 18+ |
-| Flyway | 11.14.1 |
-| jjwt | 0.12.6 |
-| Hibernate | 7.1.8 |
-| Lombok | 1.18.x |
-| springdoc-openapi | 2.8.6 |
-| H2 (testes) | 2.4.x |
+| Tecnologia        | Versão  |
+|-------------------|---------|
+| Java              | 25      |
+| Spring Boot       | 4.0.0   |
+| Spring Security   | 7.0.0   |
+| Spring Data JPA   | 4.0.0   |
+| PostgreSQL        | 18+     |
+| Flyway            | 11.14.1 |
+| jjwt              | 0.12.6  |
+| Hibernate         | 7.1.8   |
+| Lombok            | 1.18.x  |
+| springdoc-openapi | 2.8.6   |
+| H2 (testes)       | 2.4.x   |
 
 ---
 
@@ -134,7 +134,7 @@ As migrations Flyway rodam automaticamente na inicialização. Um usuário `admi
 ### 5. Acesse o Swagger
 
 ```
-http://localhost:8080/swagger-ui.html
+http://localhost:8080/api/swagger-ui.html
 ```
 
 ### Rodar os testes
@@ -157,22 +157,24 @@ Os testes utilizam H2 em memória — nenhuma configuração adicional é necess
 
 Definidas no arquivo `.env` na raiz do projeto:
 
-| Variável | Tipo | Descrição | Exemplo |
-|----------|------|-----------|---------|
-| `SPRING_PROFILES_ACTIVE` | `string` | Perfil ativo da aplicação | `dev` |
-| `DB_HOST` | `string` | Host do PostgreSQL | `localhost` |
-| `DB_PORT` | `number` | Porta do PostgreSQL | `5432` |
-| `DB_NAME` | `string` | Nome do banco de dados | `aque_db` |
-| `DB_USER` | `string` | Usuário do banco | `aque` |
-| `DB_PASS` | `string` | Senha do banco | `aque` |
-| `JWT_SECRET` | `string` | Chave secreta para assinar o JWT (mín. 256 bits) | `minha-chave-secreta-longa` |
-| `JWT_EXPIRATION_MS` | `number` | Tempo de expiração do token em ms | `86400000` |
+| Variável                 | Tipo     | Descrição                                        | Exemplo                     |
+|--------------------------|----------|--------------------------------------------------|-----------------------------|
+| `SPRING_PROFILES_ACTIVE` | `string` | Perfil ativo da aplicação                        | `dev`                       |
+| `DB_HOST`                | `string` | Host do PostgreSQL                               | `localhost`                 |
+| `DB_PORT`                | `number` | Porta do PostgreSQL                              | `5432`                      |
+| `DB_NAME`                | `string` | Nome do banco de dados                           | `aque_db`                   |
+| `DB_USER`                | `string` | Usuário do banco                                 | `aque`                      |
+| `DB_PASS`                | `string` | Senha do banco                                   | `aque`                      |
+| `JWT_SECRET`             | `string` | Chave secreta para assinar o JWT (mín. 256 bits) | `minha-chave-secreta-longa` |
+| `JWT_EXPIRATION_MS`      | `number` | Tempo de expiração do token em ms                | `86400000`                  |
 
 ---
 
 ## 📡 Endpoints
 
-Todos os endpoints exceto `/auth/login` exigem o header:
+Todos os endpoints REST usam o prefixo `/api`.
+
+Todos os endpoints exceto `/api/auth/login` exigem o header:
 ```
 Authorization: Bearer {token}
 ```
