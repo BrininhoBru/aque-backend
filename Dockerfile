@@ -22,15 +22,10 @@ RUN mvn clean package -DskipTests -q
 # -----------------------------------------------------------------------------
 FROM eclipse-temurin:25-jre
 
+# Instala curl para o healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
-
 COPY --from=build /app/target/*.jar app.jar
-
 EXPOSE 8080
-
-# Flags de memória adequadas para o Raspberry Pi 3B (1GB RAM)
-ENTRYPOINT ["java", \
-  "-Xmx256m", \
-  "-Xms128m", \
-  "-XX:+UseSerialGC", \
-  "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xmx256m", "-Xms128m", "-XX:+UseSerialGC", "-jar", "app.jar"]
