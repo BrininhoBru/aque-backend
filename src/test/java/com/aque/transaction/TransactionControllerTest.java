@@ -52,7 +52,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
     void criarLancamento_semValorPago_deveSerPendente() throws Exception {
         var request = new TransactionRequest(
                 "Supermercado", category.getId(), CategoryType.DESPESA,
-                3, 2026, BigDecimal.valueOf(500), null);
+                3, 2026, BigDecimal.valueOf(500), null, null);
 
         mockMvc.perform(post("/transactions")
                         .header("Authorization", token)
@@ -66,7 +66,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
     void criarLancamento_comValorPago_deveSerPago() throws Exception {
         var request = new TransactionRequest(
                 "Supermercado", category.getId(), CategoryType.DESPESA,
-                3, 2026, BigDecimal.valueOf(500), BigDecimal.valueOf(480));
+                3, 2026, BigDecimal.valueOf(500), BigDecimal.valueOf(480), null);
 
         mockMvc.perform(post("/transactions")
                         .header("Authorization", token)
@@ -81,7 +81,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
     void valorNegativo_deveRetornar400() throws Exception {
         var request = new TransactionRequest(
                 "Inválido", category.getId(), CategoryType.DESPESA,
-                3, 2026, BigDecimal.valueOf(-100), null);
+                3, 2026, BigDecimal.valueOf(-100), null, null);
 
         mockMvc.perform(post("/transactions")
                         .header("Authorization", token)
@@ -94,7 +94,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
     void mesInvalido_deveRetornar400() throws Exception {
         var request = new TransactionRequest(
                 "Inválido", category.getId(), CategoryType.DESPESA,
-                13, 2026, BigDecimal.valueOf(100), null);
+                13, 2026, BigDecimal.valueOf(100), null, null);
 
         mockMvc.perform(post("/transactions")
                         .header("Authorization", token)
@@ -107,7 +107,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
     void filtrarPorMesEAno_deveRetornarApenasMesFiltrado() throws Exception {
         var request = new TransactionRequest(
                 "Supermercado", category.getId(), CategoryType.DESPESA,
-                3, 2026, BigDecimal.valueOf(500), null);
+                3, 2026, BigDecimal.valueOf(500), null, null);
 
         mockMvc.perform(post("/transactions")
                 .header("Authorization", token)
