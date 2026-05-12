@@ -4,6 +4,7 @@ import com.aque.category.CategoryType;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record TransactionRequest(
@@ -29,6 +30,8 @@ public record TransactionRequest(
         BigDecimal amountExpected,
 
         @DecimalMin(value = "0.0", inclusive = false, message = "Valor pago deve ser positivo")
-        BigDecimal amountPaid
+        BigDecimal amountPaid,
+
+        LocalDate dueDate
 ) {
 }

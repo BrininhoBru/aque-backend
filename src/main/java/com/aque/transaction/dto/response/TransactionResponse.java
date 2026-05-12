@@ -6,6 +6,7 @@ import com.aque.transaction.Transaction;
 import com.aque.transaction.TransactionStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record TransactionResponse(
@@ -18,6 +19,7 @@ public record TransactionResponse(
         BigDecimal amountExpected,
         BigDecimal amountPaid,
         TransactionStatus status,
+        LocalDate dueDate,
         UUID recurringId,
         boolean isOverride
 ) {
@@ -32,6 +34,7 @@ public record TransactionResponse(
                 transaction.getAmountExpected(),
                 transaction.getAmountPaid(),
                 transaction.getStatus(),
+                transaction.getDueDate(),
                 transaction.getRecurringId(),
                 transaction.isOverride()
         );

@@ -70,6 +70,7 @@ public class TransactionService {
         transaction.setReferenceMonth(request.referenceMonth());
         transaction.setReferenceYear(request.referenceYear());
         transaction.setAmountExpected(request.amountExpected());
+        transaction.setDueDate(request.dueDate());
         applyPayment(transaction, request.amountPaid());
     }
 
