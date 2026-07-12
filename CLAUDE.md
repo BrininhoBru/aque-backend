@@ -51,4 +51,4 @@ PostgreSQL, schema managed by **Flyway** (`src/main/resources/db/migration/V*.sq
 
 ### API docs
 
-Swagger UI at `/api/swagger-ui.html`, OpenAPI JSON at `/api/v3/api-docs` (springdoc).
+Swagger UI at `/api/swagger-ui.html`, OpenAPI JSON at `/api/v3/api-docs` (springdoc). 
