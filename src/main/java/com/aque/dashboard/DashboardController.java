@@ -12,12 +12,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/dashboard")
 @RequiredArgsConstructor
@@ -38,7 +42,7 @@ public class DashboardController {
     @GetMapping("/summary/{year}/{month}")
     public ResponseEntity<DashboardSummaryResponse> getSummary(
             @Parameter(description = "Ano") @PathVariable int year,
-            @Parameter(description = "Mês (1-12)") @PathVariable int month) {
+            @Parameter(description = "Mês (1-12)") @PathVariable @Min(1) @Max(12) int month) {
         return ResponseEntity.ok(dashboardService.getSummary(year, month));
     }
 
@@ -52,7 +56,7 @@ public class DashboardController {
     @GetMapping("/by-category/{year}/{month}")
     public ResponseEntity<List<CategoryTotalResponse>> getByCategory(
             @Parameter(description = "Ano") @PathVariable int year,
-            @Parameter(description = "Mês (1-12)") @PathVariable int month,
+            @Parameter(description = "Mês (1-12)") @PathVariable @Min(1) @Max(12) int month,
             @Parameter(description = "Tipo: RECEITA ou DESPESA")
             @RequestParam(required = false) CategoryType type) {
         return ResponseEntity.ok(dashboardService.getByCategory(year, month, type));
@@ -84,7 +88,7 @@ public class DashboardController {
     @GetMapping("/split/{year}/{month}")
     public ResponseEntity<SplitResultResponse> getSplit(
             @Parameter(description = "Ano") @PathVariable int year,
-            @Parameter(description = "Mês (1-12)") @PathVariable int month) {
+            @Parameter(description = "Mês (1-12)") @PathVariable @Min(1) @Max(12) int month) {
         return ResponseEntity.ok(dashboardService.getSplit(year, month));
     }
 }

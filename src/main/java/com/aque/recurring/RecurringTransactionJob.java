@@ -36,21 +36,27 @@ public class RecurringTransactionJob {
         int count = 0;
 
         for (RecurringTransaction recurring : actives) {
-            boolean alreadyExists = transactionRepository
-                    .existsByRecurringIdAndReferenceMonthAndReferenceYear(
-                            recurring.getId(), month, year
-                    );
+            try {
+                boolean alreadyExists = transactionRepository
+                        .existsByRecurringIdAndReferenceMonthAndReferenceYear(
+                                recurring.getId(), month, year
+                        );
 
-            if (alreadyExists) {
-                log.debug("Recorrente {} já gerado para {}/{} — ignorando",
-                        recurring.getId(), month, year);
-                continue;
+                if (alreadyExists) {
+                    log.debug("Recorrente {} já gerado para {}/{} — ignorando",
+                            recurring.getId(), month, year);
+                    continue;
+                }
+
+                Transaction transaction = getTransaction(year, month, recurring);
+
+                transactionRepository.save(transaction);
+                count++;
+            } catch (RuntimeException e) {
+                // isola a falha: uma recorrência com problema não pode travar a geração das demais
+                log.error("Falha ao gerar instância do recorrente {} para {}/{}",
+                        recurring.getId(), month, year, e);
             }
-
-            Transaction transaction = getTransaction(year, month, recurring);
-
-            transactionRepository.save(transaction);
-            count++;
         }
 
         log.info("Geração concluída para {}/{}: {} instâncias criadas", month, year, count);

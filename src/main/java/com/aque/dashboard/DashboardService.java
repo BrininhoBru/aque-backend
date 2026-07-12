@@ -10,6 +10,7 @@ import com.aque.dashboard.dto.response.SplitResultResponse;
 import com.aque.exception.BusinessException;
 import com.aque.person.dto.response.PersonResponse;
 import com.aque.split.SplitRule;
+import com.aque.split.SplitRuleItem;
 import com.aque.split.SplitRuleRepository;
 import com.aque.transaction.TransactionRepository;
 import com.aque.transaction.TransactionStatus;
@@ -99,18 +100,28 @@ public class DashboardService {
         BigDecimal totalExpense = transactionRepository
                 .sumExpected(month, year, CategoryType.DESPESA);
 
-        List<SplitResultResponse.SplitResultItemResponse> items = rule.getItems().stream()
-                .map(item -> {
-                    BigDecimal amount = totalExpense
-                            .multiply(item.getPercentage())
+        // Último item recebe o resto da divisão em vez de arredondar independente,
+        // senão a soma dos itens pode não bater com totalExpense por causa do HALF_UP.
+        List<SplitRuleItem> ruleItems = new ArrayList<>(rule.getItems());
+        ruleItems.sort(java.util.Comparator.comparing(i -> i.getPerson().getId()));
+        List<SplitResultResponse.SplitResultItemResponse> items = new ArrayList<>();
+        BigDecimal allocated = BigDecimal.ZERO;
+        for (int i = 0; i < ruleItems.size(); i++) {
+            SplitRuleItem item = ruleItems.get(i);
+            boolean isLast = i == ruleItems.size() - 1;
+            BigDecimal amount = isLast
+                    ? totalExpense.subtract(allocated)
+                    : totalExpense.multiply(item.getPercentage())
                             .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                    return new SplitResultResponse.SplitResultItemResponse(
-                            PersonResponse.from(item.getPerson()),
-                            item.getPercentage(),
-                            amount
-                    );
-                })
-                .toList();
+            if (!isLast) {
+                allocated = allocated.add(amount);
+            }
+            items.add(new SplitResultResponse.SplitResultItemResponse(
+                    PersonResponse.from(item.getPerson()),
+                    item.getPercentage(),
+                    amount
+            ));
+        }
 
         return new SplitResultResponse(totalExpense, items);
     }
