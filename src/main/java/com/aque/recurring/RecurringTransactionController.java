@@ -10,14 +10,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
+@Validated
 @RestController
 @RequestMapping("/recurring")
 @RequiredArgsConstructor
@@ -99,7 +103,7 @@ public class RecurringTransactionController {
     @PostMapping("/generate/{year}/{month}")
     public ResponseEntity<String> generate(
             @Parameter(description = "Ano") @PathVariable int year,
-            @Parameter(description = "Mês (1-12)") @PathVariable int month) {
+            @Parameter(description = "Mês (1-12)") @PathVariable @Min(1) @Max(12) int month) {
         int count = recurringService.generate(year, month);
         return ResponseEntity.ok(count + " instâncias geradas para " + month + "/" + year);
     }

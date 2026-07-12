@@ -10,10 +10,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Validated
 @RestController
 @RequestMapping("/split")
 @RequiredArgsConstructor
@@ -36,7 +40,7 @@ public class SplitRuleController {
     @GetMapping("/{year}/{month}")
     public ResponseEntity<SplitRuleResponse> findByMonth(
             @Parameter(description = "Ano") @PathVariable int year,
-            @Parameter(description = "Mês (1-12)") @PathVariable int month) {
+            @Parameter(description = "Mês (1-12)") @PathVariable @Min(1) @Max(12) int month) {
         return ResponseEntity.ok(splitRuleService.findByMonth(year, month));
     }
 
@@ -55,7 +59,7 @@ public class SplitRuleController {
     @PutMapping("/{year}/{month}")
     public ResponseEntity<SplitRuleResponse> save(
             @Parameter(description = "Ano") @PathVariable int year,
-            @Parameter(description = "Mês (1-12)") @PathVariable int month,
+            @Parameter(description = "Mês (1-12)") @PathVariable @Min(1) @Max(12) int month,
             @Valid @RequestBody SplitRuleRequest request) {
         return ResponseEntity.ok(splitRuleService.save(year, month, request));
     }
