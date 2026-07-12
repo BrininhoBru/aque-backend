@@ -8,6 +8,10 @@ public record DashboardSummaryResponse(
         BigDecimal totalExpenseExpected,
         BigDecimal totalExpensePaid,
         BigDecimal balanceExpected,
-        BigDecimal balancePaid
+        BigDecimal balancePaid,
+        BigDecimal totalIncomePending,
+        BigDecimal totalExpensePending,
+        BigDecimal totalOverdueAmount,
+        long totalOverdueCount
 ) {
 }

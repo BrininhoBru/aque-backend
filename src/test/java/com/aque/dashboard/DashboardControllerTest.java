@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -104,6 +105,59 @@ class DashboardControllerTest extends BaseIntegrationTest {
         }
 
         assertThat(sum).isEqualByComparingTo(total);
+    }
+
+    @Test
+    void getSummary_atrasadoEhGlobalENaoDependeDoMesConsultado() throws Exception {
+        Category category = new Category();
+        category.setName("Aluguel");
+        category.setType(CategoryType.DESPESA);
+        category.setPredefined(false);
+        categoryRepository.save(category);
+
+        Transaction overdueOtherMonth = new Transaction();
+        overdueOtherMonth.setDescription("Aluguel atrasado");
+        overdueOtherMonth.setCategory(category);
+        overdueOtherMonth.setType(CategoryType.DESPESA);
+        overdueOtherMonth.setReferenceMonth(1);
+        overdueOtherMonth.setReferenceYear(2026);
+        overdueOtherMonth.setAmountExpected(new BigDecimal("500"));
+        overdueOtherMonth.setStatus(TransactionStatus.PENDENTE);
+        overdueOtherMonth.setDueDate(LocalDate.now().minusDays(5));
+        transactionRepository.save(overdueOtherMonth);
+
+        Transaction paid = new Transaction();
+        paid.setDescription("Conta paga");
+        paid.setCategory(category);
+        paid.setType(CategoryType.DESPESA);
+        paid.setReferenceMonth(3);
+        paid.setReferenceYear(2026);
+        paid.setAmountExpected(new BigDecimal("100"));
+        paid.setAmountPaid(new BigDecimal("100"));
+        paid.setStatus(TransactionStatus.PAGO);
+        paid.setDueDate(LocalDate.now().minusDays(5));
+        transactionRepository.save(paid);
+
+        Transaction futureDue = new Transaction();
+        futureDue.setDescription("Conta futura");
+        futureDue.setCategory(category);
+        futureDue.setType(CategoryType.DESPESA);
+        futureDue.setReferenceMonth(3);
+        futureDue.setReferenceYear(2026);
+        futureDue.setAmountExpected(new BigDecimal("300"));
+        futureDue.setStatus(TransactionStatus.PENDENTE);
+        futureDue.setDueDate(LocalDate.now().plusDays(5));
+        transactionRepository.save(futureDue);
+
+        MvcResult result = mockMvc.perform(get("/dashboard/summary/2026/3")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+
+        assertThat(new BigDecimal(json.get("totalOverdueAmount").asText())).isEqualByComparingTo("500");
+        assertThat(json.get("totalOverdueCount").asLong()).isEqualTo(1L);
     }
 
     @Test

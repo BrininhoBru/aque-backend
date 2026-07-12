@@ -39,7 +39,25 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
                        @Param("status") TransactionStatus status);
 
     @Query("""
-            SELECT t.category, 
+            SELECT COALESCE(SUM(t.amountExpected), 0)
+            FROM Transaction t
+            WHERE t.type = :type
+              AND t.status = com.aque.transaction.TransactionStatus.PENDENTE
+              AND t.dueDate < CURRENT_DATE
+            """)
+    BigDecimal sumOverdue(@Param("type") CategoryType type);
+
+    @Query("""
+            SELECT COUNT(t)
+            FROM Transaction t
+            WHERE t.type = :type
+              AND t.status = com.aque.transaction.TransactionStatus.PENDENTE
+              AND t.dueDate < CURRENT_DATE
+            """)
+    long countOverdue(@Param("type") CategoryType type);
+
+    @Query("""
+            SELECT t.category,
                    COALESCE(SUM(t.amountExpected), 0),
                    COALESCE(SUM(CASE WHEN t.status = 'PAGO' THEN t.amountPaid ELSE 0 END), 0)
             FROM Transaction t
