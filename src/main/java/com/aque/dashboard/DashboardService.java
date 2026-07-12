@@ -102,7 +102,8 @@ public class DashboardService {
 
         // Último item recebe o resto da divisão em vez de arredondar independente,
         // senão a soma dos itens pode não bater com totalExpense por causa do HALF_UP.
-        List<SplitRuleItem> ruleItems = rule.getItems();
+        List<SplitRuleItem> ruleItems = new ArrayList<>(rule.getItems());
+        ruleItems.sort(java.util.Comparator.comparing(i -> i.getPerson().getId()));
         List<SplitResultResponse.SplitResultItemResponse> items = new ArrayList<>();
         BigDecimal allocated = BigDecimal.ZERO;
         for (int i = 0; i < ruleItems.size(); i++) {

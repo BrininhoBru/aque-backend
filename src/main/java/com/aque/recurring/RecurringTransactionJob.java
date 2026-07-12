@@ -52,7 +52,7 @@ public class RecurringTransactionJob {
 
                 transactionRepository.save(transaction);
                 count++;
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 // isola a falha: uma recorrência com problema não pode travar a geração das demais
                 log.error("Falha ao gerar instância do recorrente {} para {}/{}",
                         recurring.getId(), month, year, e);

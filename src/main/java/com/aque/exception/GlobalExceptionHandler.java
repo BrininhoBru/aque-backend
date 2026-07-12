@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
         String message = ex.getConstraintViolations().stream()
-                .map(v -> v.getMessage())
+                .map(v -> v.getPropertyPath() + ": " + v.getMessage())
                 .reduce((a, b) -> a + "; " + b)
                 .orElse("Parâmetro inválido");
         return ResponseEntity.badRequest()
