@@ -49,11 +49,19 @@ class DashboardServiceTest {
                 .thenReturn(BigDecimal.valueOf(3000));
         when(transactionRepository.sumPaid(3, 2026, CategoryType.DESPESA, TransactionStatus.PAGO))
                 .thenReturn(BigDecimal.valueOf(1000));
+        when(transactionRepository.sumOverdue(CategoryType.DESPESA))
+                .thenReturn(BigDecimal.valueOf(200));
+        when(transactionRepository.countOverdue(CategoryType.DESPESA))
+                .thenReturn(2L);
 
         DashboardSummaryResponse summary = service.getSummary(2026, 3);
 
         assertThat(summary.balanceExpected()).isEqualByComparingTo("2000");
         assertThat(summary.balancePaid()).isEqualByComparingTo("3000");
+        assertThat(summary.totalIncomePending()).isEqualByComparingTo("1000");
+        assertThat(summary.totalExpensePending()).isEqualByComparingTo("2000");
+        assertThat(summary.totalOverdueAmount()).isEqualByComparingTo("200");
+        assertThat(summary.totalOverdueCount()).isEqualTo(2L);
     }
 
     @Test

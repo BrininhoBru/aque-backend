@@ -45,13 +45,20 @@ public class DashboardService {
         BigDecimal expensePaid = transactionRepository
                 .sumPaid(month, year, CategoryType.DESPESA, TransactionStatus.PAGO);
 
+        BigDecimal overdueAmount = transactionRepository.sumOverdue(CategoryType.DESPESA);
+        long overdueCount = transactionRepository.countOverdue(CategoryType.DESPESA);
+
         return new DashboardSummaryResponse(
                 incomeExpected,
                 incomePaid,
                 expenseExpected,
                 expensePaid,
                 incomeExpected.subtract(expenseExpected),
-                incomePaid.subtract(expensePaid)
+                incomePaid.subtract(expensePaid),
+                incomeExpected.subtract(incomePaid),
+                expenseExpected.subtract(expensePaid),
+                overdueAmount,
+                overdueCount
         );
     }
 
