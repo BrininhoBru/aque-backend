@@ -50,5 +50,4 @@ PostgreSQL, schema managed by **Flyway** (`src/main/resources/db/migration/V*.sq
 `application.properties` holds shared config; `application-dev.properties` / `application-prod.properties` hold profile overrides. Active profile defaults to `dev` (`spring.profiles.active`).
 
 ### API docs
-
 Swagger UI at `/api/swagger-ui.html`, OpenAPI JSON at `/api/v3/api-docs` (springdoc).
