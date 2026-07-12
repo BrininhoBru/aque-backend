@@ -45,6 +45,9 @@ public class SplitRuleService {
                 });
 
         rule.getItems().clear();
+        // flush antes de inserir os itens novos: sem isso o Hibernate manda os INSERT
+        // antes do DELETE dos órfãos e colide com a UNIQUE(split_rule_id, person_id)
+        splitRuleRepository.saveAndFlush(rule);
 
         for (SplitRuleItemRequest itemRequest : request.items()) {
             Person person = personRepository.findById(itemRequest.personId())
