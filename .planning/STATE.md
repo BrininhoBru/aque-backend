@@ -5,15 +5,15 @@ milestone_name: Tech Debt & Security Cleanup
 current_phase: 01
 current_phase_name: Security & Deploy Hardening
 status: executing
-stopped_at: Roadmap created for milestone v1.0 (3 phases, 7/7 requirements mapped)
-last_updated: "2026-08-02T12:30:21.827Z"
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-08-02T12:37:49.477Z"
 last_activity: 2026-08-02
 last_activity_desc: Phase 01 execution started
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
+  completed_plans: 1
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-01)
 ## Current Position
 
 Phase: 01 (Security & Deploy Hardening) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 01
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-08-02 — Phase 01 execution started
 
-Progress: [ ] [ ] [ ] — 0/3 phases complete
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -56,6 +56,11 @@ Progress: [ ] [ ] [ ] — 0/3 phases complete
 - Trend: —
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 6min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -67,6 +72,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Onboarding: Flyway over Hibernate auto-DDL — predictable prod schema changes
 - Roadmap: 3 phases grouped by kind of work (security, cleanup, tests) rather than one phase per issue — coarse granularity, all 7 items are small and independent
 - Roadmap: Phase 3 (tests) runs after Phase 2 (cleanup) so recurring-transaction tests target the collapsed query method, not the one about to be deleted
+- [Phase ?]: 01-01: Empty default app.cors.allowed-origins preserves today's same-origin behavior; config-only change needed for future split-origin deploy
+- [Phase ?]: 01-01: chmod +x mvnw — wrapper script was not executable, blocking all test runs (Rule 3 blocking-issue fix)
 
 ### Pending Todos
 
@@ -78,6 +85,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - DEBT-01 (#10) resolution depends on whether `loghub-logger` has a stable release; if not, removal is the fallback (it currently has no call sites)
 - No ownership/multi-user model (intentional, see CONCERNS.md) — out of scope for v1.0
 - Bleeding-edge Spring Boot 4.0.0 / Java 25 pairing — track security advisories
+- Pre-existing unrelated failure: DashboardServiceTest.getSplit_ultimoItemAbsorveORestoDoArredondamento NPE on full ./mvnw test run — tracked in deferred-items.md and WINDOWS.md, out of scope for phase 01
 
 ## Deferred Items
 
@@ -88,7 +96,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-08-01
-Stopped at: Roadmap created for milestone v1.0 (3 phases, 7/7 requirements mapped)
+Last session: 2026-08-02T12:37:49.467Z
+Stopped at: Completed 01-01-PLAN.md
 Resume file: None
 Next action: `/gsd-plan-phase 1`

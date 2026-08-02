@@ -20,7 +20,7 @@ Scoped 1:1 from the 7 GitHub issues filed after the `/gsd-onboard` codebase audi
 ### Tech Debt
 
 - [ ] **DEBT-01**: `loghub-logger` is pinned to a stable (non-SNAPSHOT) release, or removed from `pom.xml` if confirmed unused — [GH #10](https://github.com/BrininhoBru/aque-backend/issues/10)
-- [ ] **DEBT-02**: Explicit `CorsConfigurationSource` exists in `SecurityConfig` for future split-origin deploys — [GH #11](https://github.com/BrininhoBru/aque-backend/issues/11)
+- [x] **DEBT-02**: Explicit `CorsConfigurationSource` exists in `SecurityConfig` for future split-origin deploys — [GH #11](https://github.com/BrininhoBru/aque-backend/issues/11)
 - [ ] **DEBT-03**: Duplicated `findByActive`/`findByActiveTrue` query methods are collapsed into a single call site — [GH #12](https://github.com/BrininhoBru/aque-backend/issues/12)
 
 ## Future Requirements
@@ -40,7 +40,7 @@ None deferred from this milestone — all 7 audit issues are in scope.
 | Requirement | GH Issue | Phase | Status |
 |-------------|----------|-------|--------|
 | SEC-01 | #7 | Phase 1 - Security & Deploy Hardening | Pending |
-| DEBT-02 | #11 | Phase 1 - Security & Deploy Hardening | Pending |
+| DEBT-02 | #11 | Phase 1 - Security & Deploy Hardening | Complete |
 | DEBT-01 | #10 | Phase 2 - Dependency & Repository Cleanup | Pending |
 | DEBT-03 | #12 | Phase 2 - Dependency & Repository Cleanup | Pending |
 | TEST-01 | #8 | Phase 3 - Test Coverage Lock-In | Pending |
@@ -48,6 +48,7 @@ None deferred from this milestone — all 7 audit issues are in scope.
 | TEST-03 | #13 | Phase 3 - Test Coverage Lock-In | Pending |
 
 **Coverage:**
+
 - v1.0 requirements: 7 total
 - Mapped to phases: 7 ✓
 - Unmapped: 0
