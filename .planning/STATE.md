@@ -5,10 +5,10 @@ milestone_name: Tech Debt & Security Cleanup
 current_phase: 01
 current_phase_name: Security & Deploy Hardening
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-08-02T12:37:49.477Z"
+stopped_at: 01-02-PLAN.md paused at human-action checkpoint (Task 3, credential rotation) — user deferred
+last_updated: "2026-08-02T12:45:00.000Z"
 last_activity: 2026-08-02
-last_activity_desc: Phase 01 execution started
+last_activity_desc: 01-02 Task 1-2 complete (test proving external bcrypt hash + runbook doc); Task 3 (operator rotates Pi admin password) deferred by user
 progress:
   total_phases: 1
   completed_phases: 0
@@ -81,7 +81,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Blockers/Concerns
 
-- SEC-01 (#7) requires access to the deployed Raspberry Pi environment to actually rotate the credential — code/doc changes alone don't satisfy it
+- SEC-01 (#7) requires access to the deployed Raspberry Pi environment to actually rotate the credential — code/doc changes alone don't satisfy it. Deferred 2026-08-02: user chose to skip the checkpoint for now. 01-02-PLAN.md Task 1 (test) and Task 2 (runbook doc) are done and committed; Task 3 (operator rotates the Pi's admin password per `../fluxo-deploy-aque.md` § Rotação da credencial admin) is still outstanding. GH #7 stays open until Task 3 is done — resume with `/gsd-execute-phase 1` when ready to complete it.
 - DEBT-01 (#10) resolution depends on whether `loghub-logger` has a stable release; if not, removal is the fallback (it currently has no call sites)
 - No ownership/multi-user model (intentional, see CONCERNS.md) — out of scope for v1.0
 - Bleeding-edge Spring Boot 4.0.0 / Java 25 pairing — track security advisories
@@ -96,7 +96,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-08-02T12:37:49.467Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-08-02T12:45:00.000Z
+Stopped at: 01-02-PLAN.md paused at Task 3 (human-action checkpoint) — operator credential rotation on the Pi, deferred by user
 Resume file: None
-Next action: `/gsd-plan-phase 1`
+Next action: When ready to rotate the Pi admin credential, run `/gsd-execute-phase 1` to resume 01-02 Task 3; this also unblocks marking Phase 01 complete and closing GH #7.
