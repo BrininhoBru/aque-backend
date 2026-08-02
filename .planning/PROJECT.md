@@ -8,6 +8,16 @@ Aque Backend is the Spring Boot 3 (Java 25) REST API powering **aque**, a person
 
 Track and split personal/household expenses (transactions, categories, people, recurring transactions, split rules) reliably, with data that's always correct — this is a money-tracking tool, so correctness of balances and splits matters more than anything else.
 
+## Current Milestone: v1.0 Tech Debt & Security Cleanup
+
+**Goal:** Close out the 7 issues filed from the `/gsd-onboard` codebase audit — the seeded-credential security gap, two fragile-area regression tests, and coverage/dependency/cleanup debt.
+
+**Target features:**
+- Rotate/verify the seeded admin credential (security)
+- Lock in the two fragile areas (split remainder logic, split-rule save ordering) with regression tests
+- Fill the identified test-coverage gaps (auth path, low-risk CRUD services)
+- Clear the small cleanup/dependency items (duplicated query method, SNAPSHOT dependency, missing CORS config)
+
 ## Requirements
 
 ### Validated
@@ -24,9 +34,15 @@ Track and split personal/household expenses (transactions, categories, people, r
 
 ### Active
 
-<!-- No new v1 work scoped at onboarding time. -->
+<!-- Milestone v1.0: tech-debt/security cleanup, scoped from GitHub issues #7-#13 -->
 
-(None yet — this is a baseline onboarding snapshot of an already-shipped app. Run `/gsd-new-milestone` or `/gsd-capture` to scope the next slice of work.)
+- [ ] Seeded admin credential is rotated/verified after first deploy — GH #7
+- [ ] SplitRuleService update (membership change) has a regression test locking the flush-ordering behavior — GH #8
+- [ ] AuthService and CustomUserDetailsService have dedicated unit tests — GH #9
+- [ ] `loghub-logger` is pinned to a stable release or removed if unused — GH #10
+- [ ] Explicit CORS config exists for future split-origin deploys — GH #11
+- [ ] Duplicated `findByActive`/`findByActiveTrue` query methods are collapsed — GH #12
+- [ ] PersonService/CategoryService/RecurringTransaction* have dedicated unit tests — GH #13
 
 ### Out of Scope
 
@@ -56,7 +72,7 @@ Track and split personal/household expenses (transactions, categories, people, r
 | Stateless JWT, no sessions | Simple REST API consumed by one SPA | ✓ Good |
 
 ---
-*Last updated: 2026-08-01 after initialization*
+*Last updated: 2026-08-01 after starting milestone v1.0*
 
 ## Evolution
 
