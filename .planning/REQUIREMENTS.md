@@ -37,23 +37,21 @@ None deferred from this milestone — all 7 audit issues are in scope.
 
 ## Traceability
 
-Populated during roadmap creation.
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| SEC-01 | TBD | Pending |
-| TEST-01 | TBD | Pending |
-| TEST-02 | TBD | Pending |
-| TEST-03 | TBD | Pending |
-| DEBT-01 | TBD | Pending |
-| DEBT-02 | TBD | Pending |
-| DEBT-03 | TBD | Pending |
+| Requirement | GH Issue | Phase | Status |
+|-------------|----------|-------|--------|
+| SEC-01 | #7 | Phase 1 - Security & Deploy Hardening | Pending |
+| DEBT-02 | #11 | Phase 1 - Security & Deploy Hardening | Pending |
+| DEBT-01 | #10 | Phase 2 - Dependency & Repository Cleanup | Pending |
+| DEBT-03 | #12 | Phase 2 - Dependency & Repository Cleanup | Pending |
+| TEST-01 | #8 | Phase 3 - Test Coverage Lock-In | Pending |
+| TEST-02 | #9 | Phase 3 - Test Coverage Lock-In | Pending |
+| TEST-03 | #13 | Phase 3 - Test Coverage Lock-In | Pending |
 
 **Coverage:**
 - v1.0 requirements: 7 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 7 ⚠️ (roadmap not yet created)
+- Mapped to phases: 7 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-08-01*
-*Last updated: 2026-08-01 after milestone v1.0 scoping*
+*Last updated: 2026-08-01 after roadmap creation for milestone v1.0*
