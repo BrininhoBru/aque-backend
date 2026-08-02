@@ -1,22 +1,31 @@
 # Requirements: Aque Backend
 
-**Defined:** 2026-08-01
+**Defined:** 2026-08-01 (updated 2026-08-01 for milestone v1.0)
 **Core Value:** Track and split personal/household expenses reliably, with correct balances and splits above all else.
 
-## v1 Requirements
+## Milestone v1.0 Requirements
 
-No v1 requirements are scoped yet. This onboarding pass documents an **already-shipped** application — its existing capabilities are captured as Validated in `.planning/PROJECT.md`, not as pending v1 work here.
+Scoped 1:1 from the 7 GitHub issues filed after the `/gsd-onboard` codebase audit ([BrininhoBru/aque-backend#7-#13](https://github.com/BrininhoBru/aque-backend/issues)). No new scope beyond these issues.
 
-When the next slice of work is scoped (via `/gsd-new-milestone` or `/gsd-capture`), add it here as checkable v1 requirements grouped by category, e.g.:
+### Security
 
-```
-### [Category]
-- [ ] **[CAT]-01**: [Requirement description]
-```
+- [ ] **SEC-01**: Seeded admin credential is rotated/verified after first deploy to any non-local environment, with the rotation step documented in deploy docs — [GH #7](https://github.com/BrininhoBru/aque-backend/issues/7)
 
-## v2 Requirements
+### Testing
 
-None deferred yet.
+- [ ] **TEST-01**: SplitRuleService has a regression test that updates an existing split rule's person list (add + remove in the same request), locking in the flush-before-repopulate ordering behavior — [GH #8](https://github.com/BrininhoBru/aque-backend/issues/8)
+- [ ] **TEST-02**: AuthService and CustomUserDetailsService have dedicated unit tests covering the authentication path — [GH #9](https://github.com/BrininhoBru/aque-backend/issues/9)
+- [ ] **TEST-03**: PersonService, CategoryService, and RecurringTransactionService/Controller have dedicated unit tests — [GH #13](https://github.com/BrininhoBru/aque-backend/issues/13)
+
+### Tech Debt
+
+- [ ] **DEBT-01**: `loghub-logger` is pinned to a stable (non-SNAPSHOT) release, or removed from `pom.xml` if confirmed unused — [GH #10](https://github.com/BrininhoBru/aque-backend/issues/10)
+- [ ] **DEBT-02**: Explicit `CorsConfigurationSource` exists in `SecurityConfig` for future split-origin deploys — [GH #11](https://github.com/BrininhoBru/aque-backend/issues/11)
+- [ ] **DEBT-03**: Duplicated `findByActive`/`findByActiveTrue` query methods are collapsed into a single call site — [GH #12](https://github.com/BrininhoBru/aque-backend/issues/12)
+
+## Future Requirements
+
+None deferred from this milestone — all 7 audit issues are in scope.
 
 ## Out of Scope
 
@@ -24,20 +33,27 @@ None deferred yet.
 |---------|--------|
 | Multi-user / multi-tenant ownership model | Single-admin personal finance app by design; see PROJECT.md |
 | Role-based authorization | No second, lower-privilege user exists |
+| httpOnly-cookie JWT storage / token revocation list | Acceptable risk at current single-user scale per CONCERNS.md; revisit only if threat model changes |
 
 ## Traceability
 
-No phases exist yet — nothing to trace. Populated when the first milestone's roadmap is created.
+Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| *(none)* | — | — |
+| SEC-01 | TBD | Pending |
+| TEST-01 | TBD | Pending |
+| TEST-02 | TBD | Pending |
+| TEST-03 | TBD | Pending |
+| DEBT-01 | TBD | Pending |
+| DEBT-02 | TBD | Pending |
+| DEBT-03 | TBD | Pending |
 
 **Coverage:**
-- v1 requirements: 0 total
-- Mapped to phases: 0
-- Unmapped: 0
+- v1.0 requirements: 7 total
+- Mapped to phases: 0 (pending roadmap)
+- Unmapped: 7 ⚠️ (roadmap not yet created)
 
 ---
 *Requirements defined: 2026-08-01*
-*Last updated: 2026-08-01 after initialization*
+*Last updated: 2026-08-01 after milestone v1.0 scoping*
