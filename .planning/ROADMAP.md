@@ -29,7 +29,11 @@ Each requirement traces 1:1 to a GitHub issue. Every phase plan closes its issue
   3. `SecurityConfig` exposes a `CorsConfigurationSource` bean whose allowed origins come from env-overridable configuration (no hardcoded production origin)
   4. A test asserts a cross-origin request from an allowed origin passes and one from a disallowed origin is rejected
   5. The existing dev flow (`aque-web` proxying `/api` to `localhost:8080`) still works unchanged after the CORS bean is added
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — CORS: `corsConfigurationSource` bean driven by `app.cors.allowed-origins` (empty default), with allow/reject/dev-flow tests (DEBT-02, GH #11)
+- [ ] 01-02-PLAN.md — Admin credential rotation: prove the external-hash path, write the deploy runbook, rotate on the Pi (SEC-01, GH #7)
 
 ### Phase 2: Dependency & Repository Cleanup
 **Goal**: The build resolves only stable artifacts and the recurring-transaction repository has exactly one active-lookup path
@@ -57,7 +61,7 @@ Each requirement traces 1:1 to a GitHub issue. Every phase plan closes its issue
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Security & Deploy Hardening | 0/? | Not started | - |
+| 1. Security & Deploy Hardening | 0/2 | Planned | - |
 | 2. Dependency & Repository Cleanup | 0/? | Not started | - |
 | 3. Test Coverage Lock-In | 0/? | Not started | - |
 
