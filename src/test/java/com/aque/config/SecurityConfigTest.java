@@ -23,4 +23,20 @@ class SecurityConfigTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:4200"));
     }
+
+    @Test
+    void preflight_origemNaoPermitida_semCabecalhoCors() throws Exception {
+        mockMvc.perform(options("/categories")
+                        .header("Origin", "https://evil.example.com")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+    }
+
+    @Test
+    void requisicaoSemOrigin_fluxoProxy_continuaFuncionando() throws Exception {
+        mockMvc.perform(get("/categories")
+                        .header("Authorization", token))
+                .andExpect(status().isOk());
+    }
 }
