@@ -7,6 +7,4 @@ import java.util.UUID;
 
 public interface RecurringTransactionRepository extends JpaRepository<RecurringTransaction, UUID> {
     List<RecurringTransaction> findByActive(boolean active);
-
-    List<RecurringTransaction> findByActiveTrue();
 }

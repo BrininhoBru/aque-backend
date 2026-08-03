@@ -35,7 +35,7 @@ class RecurringTransactionJobUnitTest {
         RecurringTransaction quebrado = recurring("Quebrado");
         RecurringTransaction ok = recurring("Aluguel");
 
-        when(recurringRepository.findByActiveTrue()).thenReturn(List.of(quebrado, ok));
+        when(recurringRepository.findByActive(true)).thenReturn(List.of(quebrado, ok));
         when(transactionRepository.existsByRecurringIdAndReferenceMonthAndReferenceYear(any(), eq(3), eq(2026)))
                 .thenReturn(false);
         when(transactionRepository.save(any()))
@@ -52,7 +52,7 @@ class RecurringTransactionJobUnitTest {
     void generate_idempotente_ignoraRecorrenteJaGerado() {
         RecurringTransaction recurring = recurring("Aluguel");
 
-        when(recurringRepository.findByActiveTrue()).thenReturn(List.of(recurring));
+        when(recurringRepository.findByActive(true)).thenReturn(List.of(recurring));
         when(transactionRepository.existsByRecurringIdAndReferenceMonthAndReferenceYear(
                 recurring.getId(), 3, 2026)).thenReturn(true);
 

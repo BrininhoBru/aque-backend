@@ -32,7 +32,7 @@ public class RecurringTransactionJob {
     public int generate(int year, int month) {
         log.info("Iniciando geração de recorrentes para {}/{}", month, year);
 
-        List<RecurringTransaction> actives = recurringRepository.findByActiveTrue();
+        List<RecurringTransaction> actives = recurringRepository.findByActive(true);
         int count = 0;
 
         for (RecurringTransaction recurring : actives) {
