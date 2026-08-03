@@ -51,3 +51,16 @@ PostgreSQL, schema managed by **Flyway** (`src/main/resources/db/migration/V*.sq
 
 ### API docs
 Swagger UI at `/api/swagger-ui.html`, OpenAPI JSON at `/api/v3/api-docs` (springdoc).
+
+### CORS
+Explicit `CorsConfigurationSource` in `SecurityConfig`, allowed origins from `app.cors.allowed-origins` (env `CORS_ALLOWED_ORIGINS`, empty by default — same-origin only until a split-origin deploy sets it).
+
+## Reference docs
+
+Deeper, verified-against-code analysis lives in `.claude/docs/`: `ARCHITECTURE.md` (layers, data flow, anti-patterns), `CONVENTIONS.md` (naming, error handling, style), `STACK.md` (dependencies, versions), `STRUCTURE.md` (where to add new code), `TESTING.md` (test patterns/fixtures), `INTEGRATIONS.md` (external services, env vars), `CONCERNS.md` (tech debt, known bugs, fragile areas). Read the relevant one before a structural change or when this file doesn't have the answer.
+
+## Key decisions
+
+- **Single-admin, no ownership model** — personal/household finance app, not multi-tenant SaaS. Don't add `owner_id`/multi-tenancy without a real second-user requirement.
+- **Flyway over Hibernate auto-DDL** — predictable, reviewable schema changes in production.
+- **Stateless JWT, no sessions** — simple REST API consumed by one SPA (`aque-web`).

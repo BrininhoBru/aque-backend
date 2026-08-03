@@ -1,7 +1,4 @@
-<!-- refreshed: 2026-08-01 -->
 # Architecture
-
-**Analysis Date:** 2026-08-01
 
 ## System Overview
 
@@ -48,7 +45,7 @@ Scheduled job (`RecurringTransactionJob`) runs outside the request cycle, writin
 | `<Domain>Repository` | Data access, Spring Data JPA query derivation + `Specification` filters | `src/main/java/com/aque/<domain>/<Domain>Repository.java` |
 | `<Domain>` (entity) | JPA-mapped table, Lombok `@Getter/@Setter` | `src/main/java/com/aque/<domain>/<Domain>.java` |
 | DTOs (records) | Request/response shape, `from(entity)` static factory for responses | `src/main/java/com/aque/<domain>/dto/{request,response}/*.java` |
-| `SecurityConfig` | Stateless JWT filter chain, public route allowlist, password encoder | `src/main/java/com/aque/config/SecurityConfig.java` |
+| `SecurityConfig` | Stateless JWT filter chain, CORS, public route allowlist, password encoder | `src/main/java/com/aque/config/SecurityConfig.java` |
 | `JwtFilter` | Extracts/validates Bearer token per request, populates `SecurityContextHolder` | `src/main/java/com/aque/security/JwtFilter.java` |
 | `JwtService` | Issues/parses JWTs (secret + expiry from `app.jwt.*`) | `src/main/java/com/aque/security/JwtService.java` |
 | `CustomUserDetailsService` | Loads `User` for Spring Security auth | `src/main/java/com/aque/security/CustomUserDetailsService.java` |
@@ -60,7 +57,7 @@ Scheduled job (`RecurringTransactionJob`) runs outside the request cycle, writin
 
 **Overall:** Layered / package-by-feature monolith (Spring Boot 3, Java 25). Each business domain (`auth`, `user`, `category`, `person`, `transaction`, `recurring`, `split`, `dashboard`) is a self-contained vertical slice: Controller → Service → Repository → Entity, plus a local `dto/` folder.
 
-**Key Characteristics:**
+**Key characteristics:**
 - No separate "domain model" vs "persistence model" split — the JPA `@Entity` doubles as the domain object; DTOs (Java records) are the only translation boundary.
 - Services are constructor-injected (`@RequiredArgsConstructor`, Lombok) and largely stateless.
 - No repository/service interfaces — concrete classes only (`TransactionService`, not `TransactionServiceImpl` behind an interface). Avoid adding interfaces for single implementations.
@@ -73,7 +70,7 @@ Scheduled job (`RecurringTransactionJob`) runs outside the request cycle, writin
 **Controller layer:**
 - Purpose: HTTP request/response mapping, input binding, OpenAPI/Swagger annotations, no business logic.
 - Location: `src/main/java/com/aque/<domain>/<Domain>Controller.java`
-- Contains: `@RestController` classes, one per domain, mapped under a domain-root path (e.g. `/transactions`, note: `server.servlet.context-path=/api` prefixes all routes in production).
+- Contains: `@RestController` classes, one per domain, mapped under a domain-root path (e.g. `/transactions`; `server.servlet.context-path=/api` prefixes all routes in production).
 - Depends on: the domain's `Service`.
 - Used by: HTTP clients (aque-web SPA), Swagger UI.
 
@@ -117,7 +114,7 @@ Scheduled job (`RecurringTransactionJob`) runs outside the request cycle, writin
 3. `TransactionController.create` binds and `@Valid`-ates `TransactionRequest` (`src/main/java/com/aque/transaction/TransactionController.java:64`).
 4. `TransactionService.create` resolves `Category` via `CategoryRepository.findById` (throwing `BusinessException` on 404), maps the request onto a new `Transaction` entity, persists via `TransactionRepository.save` (`src/main/java/com/aque/transaction/TransactionService.java:44`).
 5. `TransactionResponse.from(entity)` converts the saved entity to a response record; controller wraps it in `ResponseEntity.status(201)` (`src/main/java/com/aque/transaction/dto/response/TransactionResponse.java:26`).
-6. Any thrown `BusinessException`/validation error is intercepted by `GlobalExceptionHandler` and converted to a JSON error body (`src/main/java/com/aque/exception/GlobalExceptionHandler.java`).
+6. Any thrown `BusinessException`/validation error is intercepted by `GlobalExceptionHandler` and converted to a JSON error body.
 
 ### Scheduled Recurring-Transaction Generation
 
@@ -126,19 +123,17 @@ Scheduled job (`RecurringTransactionJob`) runs outside the request cycle, writin
 3. For each, checks idempotency via `TransactionRepository.existsByRecurringIdAndReferenceMonthAndReferenceYear` to avoid duplicate generation.
 4. Builds a new `Transaction` from the recurring template and saves it; per-item failures are caught and logged so one bad recurring rule doesn't abort the batch (`src/main/java/com/aque/recurring/RecurringTransactionJob.java:55`).
 
-**State Management:**
-- No in-memory application state; all state is in Postgres. Auth state is entirely stateless (JWT), no server-side sessions.
+**State management:** No in-memory application state; all state is in Postgres. Auth state is entirely stateless (JWT), no server-side sessions.
 
 ## Key Abstractions
 
 **`BusinessException` (unchecked, status-carrying):**
 - Purpose: single exception type for all domain-level failures (not-found, invalid state), carries an `HttpStatus` to drive the HTTP response.
-- Examples: `src/main/java/com/aque/exception/BusinessException.java`, thrown from `TransactionService.findCategory`, `PersonService`, etc.
 - Pattern: `throw new BusinessException("<message>", HttpStatus.NOT_FOUND)`.
 
 **`Specification<T>` inline lambdas for dynamic filtering:**
 - Purpose: build optional-predicate queries (e.g. filter transactions by month/year/category/type/status only when parameters are non-null) without generating N repository methods.
-- Examples: `src/main/java/com/aque/transaction/TransactionService.java:26`
+- Example: `src/main/java/com/aque/transaction/TransactionService.java:26`.
 - Pattern: repository extends `JpaSpecificationExecutor<Entity>`; service builds the `Specification` lambda inline and calls `repository.findAll(spec)`.
 
 **Response DTO `from(entity)` static factory:**
@@ -148,28 +143,20 @@ Scheduled job (`RecurringTransactionJob`) runs outside the request cycle, writin
 
 ## Entry Points
 
-**`AqueBackendApplication.main`:**
-- Location: `src/main/java/com/aque/AqueBackendApplication.java`
-- Triggers: JVM startup (`./mvnw spring-boot:run` or packaged jar).
-- Responsibilities: Spring Boot bootstrap, `@EnableScheduling` activates cron-based jobs.
+**`AqueBackendApplication.main`:** `src/main/java/com/aque/AqueBackendApplication.java` — Spring Boot bootstrap, `@EnableScheduling` activates cron-based jobs.
 
-**REST Controllers:**
-- Location: `src/main/java/com/aque/<domain>/<Domain>Controller.java`
-- Triggers: incoming HTTP requests under `/api` context path (`server.servlet.context-path`).
-- Responsibilities: per-domain CRUD/query endpoints (`auth`, `category`, `dashboard`, `person`, `recurring`, `split`, `transaction`, `health`).
+**REST Controllers:** `src/main/java/com/aque/<domain>/<Domain>Controller.java` — per-domain CRUD/query endpoints under `/api` (`auth`, `category`, `dashboard`, `person`, `recurring`, `split`, `transaction`, `health`).
 
-**`RecurringTransactionJob`:**
-- Location: `src/main/java/com/aque/recurring/RecurringTransactionJob.java`
-- Triggers: Spring `@Scheduled` cron (monthly), or direct call to `generate(year, month)` (used by tests/manual invocation).
-- Responsibilities: materialize `Transaction` rows from `RecurringTransaction` templates.
+**`RecurringTransactionJob`:** `src/main/java/com/aque/recurring/RecurringTransactionJob.java` — Spring `@Scheduled` cron (monthly), or direct call to `generate(year, month)` (used by tests/manual invocation).
 
 ## Architectural Constraints
 
 - **Threading:** Standard servlet thread-per-request model (Spring MVC on embedded Tomcat); the scheduled job runs on Spring's task scheduler thread, not a request thread — no explicit worker-thread pool configured.
-- **Global state:** None observed — no static mutable fields or singleton caches outside Spring-managed singleton beans (which are themselves stateless service/repository/filter beans).
-- **Circular imports:** None observed between domain packages; dependencies are one-directional at the repository level (e.g. `transaction` → `category`, `recurring` → `transaction`, never the reverse).
+- **Global state:** None — no static mutable fields or singleton caches outside Spring-managed singleton beans (themselves stateless service/repository/filter beans).
+- **Circular imports:** None between domain packages; dependencies are one-directional at the repository level (e.g. `transaction` → `category`, `recurring` → `transaction`, never the reverse).
 - **Schema changes:** `ddl-auto=validate` — Hibernate never auto-generates schema. New columns/tables require a new Flyway migration in `src/main/resources/db/migration/V{n}__description.sql`.
-- **Auth boundary:** every route requires a valid JWT except `/auth/login`, `/health`, and Swagger UI/OpenAPI paths (`src/main/java/com/aque/config/SecurityConfig.java:35`).
+- **Auth boundary:** every route requires a valid JWT except `/auth/login`, `/health`, and Swagger UI/OpenAPI paths (`src/main/java/com/aque/config/SecurityConfig.java`).
+- **CORS:** explicit `CorsConfigurationSource` bean, allowed origins driven by `app.cors.allowed-origins` (env `CORS_ALLOWED_ORIGINS`, empty by default — same-origin only until a split-origin deploy sets it).
 
 ## Anti-Patterns
 
@@ -201,7 +188,3 @@ Scheduled job (`RecurringTransactionJob`) runs outside the request cycle, writin
 **Logging:** Lombok `@Slf4j` on services/filters/jobs that log; config in `src/main/resources/logback-spring.xml`. Error/warn-level logs used for unhandled exceptions and auth edge cases.
 **Validation:** `jakarta.validation` annotations on request DTO records, enforced via `@Valid` in controller method signatures.
 **Authentication:** Stateless JWT — `JwtFilter` (per-request), `JwtService` (issue/parse), `CustomUserDetailsService` (loads `User` for Spring Security), configured in `SecurityConfig`.
-
----
-
-*Architecture analysis: 2026-08-01*

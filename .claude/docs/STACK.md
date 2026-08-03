@@ -1,19 +1,13 @@
 # Technology Stack
 
-**Analysis Date:** 2026-08-01
-
 ## Languages
 
-**Primary:**
-- Java 25 — all application code, `pom.xml` (`<java.version>25</java.version>`)
-
-**Secondary:**
-- SQL (PostgreSQL dialect) — Flyway migrations, `src/main/resources/db/migration/V*.sql`
+**Primary:** Java 25 — all application code, `pom.xml` (`<java.version>25</java.version>`)
+**Secondary:** SQL (PostgreSQL dialect) — Flyway migrations, `src/main/resources/db/migration/V*.sql`
 
 ## Runtime
 
-**Environment:**
-- JDK 25 (Eclipse Temurin in Docker: `eclipse-temurin:25-jre` runtime image)
+**Environment:** JDK 25 (Eclipse Temurin in Docker: `eclipse-temurin:25-jre` runtime image)
 
 **Package Manager:**
 - Maven (wrapper committed: `./mvnw`)
@@ -43,8 +37,8 @@
 **Critical:**
 - `io.jsonwebtoken:jjwt-api/impl/jackson` 0.12.6 — JWT issuance/parsing (`src/main/java/com/aque/security/JwtService.java`)
 - `org.postgresql:postgresql` (runtime) — JDBC driver
-- `org.flywaydb:flyway-database-postgresql` + `spring-boot-starter-flyway` — schema migrations, `src/main/resources/db/migration/`
-- `io.loghub:loghub-logger` 0.1.0-SNAPSHOT — pulled from private GitHub Packages repo; not yet referenced anywhere in `src/main/java` (dependency present, no call sites found)
+- `org.flywaydb:flyway-database-postgresql` + `spring-boot-starter-flyway` — schema migrations
+- `io.loghub:loghub-logger` 0.1.0-SNAPSHOT — pulled from private GitHub Packages repo; declared but not referenced anywhere in `src/main/java` (no call sites)
 
 **Infrastructure:**
 - `org.springdoc:springdoc-openapi-starter-webmvc-ui` 2.8.6 — OpenAPI/Swagger UI generation
@@ -55,10 +49,12 @@
 **Environment:**
 - Profile-based: `application.properties` (shared) + `application-dev.properties` / `application-prod.properties` / `application-test.properties` (overrides)
 - Active profile via `spring.profiles.active` (defaults to `dev`, set per Maven profile in `pom.xml`)
-- Secrets/env vars documented in `.env.example`: `DB_USER`, `DB_PASS`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `JWT_SECRET`, `JWT_EXPIRATION_MS`
+- Secrets/env vars documented in `.env.example`: `DB_USER`, `DB_PASS`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `JWT_SECRET`, `JWT_EXPIRATION_MS`, `CORS_ALLOWED_ORIGINS`
 - `app.jwt.secret` has **no default in base `application.properties`** — boot fails fast if `JWT_SECRET` unset in prod; dev profile supplies an insecure fallback secret for local convenience only
+- `app.cors.allowed-origins` (env `CORS_ALLOWED_ORIGINS`) defaults to empty — same-origin only until a split-origin deploy sets it
 
-**Build:**
+## Build
+
 - `pom.xml` — single-module Maven project, no submodules
 - `Dockerfile` — multi-stage ARM64 build (`maven:3.9-eclipse-temurin-25` build stage → `eclipse-temurin:25-jre` runtime stage), Maven settings injected via Docker BuildKit secret (`maven_settings`) for the private GitHub Packages repo auth
 
@@ -71,8 +67,4 @@
 **Production:**
 - Target platform: Raspberry Pi 3B (ARM64) — see repo-root `fluxo-deploy-aque.md`
 - Runtime tuned for constrained hardware: `-Xmx256m -Xms128m -XX:+UseSerialGC`, `spring.main.lazy-initialization=true`, HikariCP capped at `maximum-pool-size=5` (`application-prod.properties`)
-- Deployed via Docker image built in GitHub Actions, pulled on the Pi (see repo-root `fluxo-deploy-aque.md`)
-
----
-
-*Stack analysis: 2026-08-01*
+- Deployed via Docker image built in GitHub Actions, pulled on the Pi
