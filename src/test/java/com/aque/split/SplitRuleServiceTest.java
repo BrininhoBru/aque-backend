@@ -139,6 +139,58 @@ class SplitRuleServiceTest {
     }
 
     @Test
+    void save_regraExistente_adicionaERemovePessoasNaMesmaRequisicao() {
+        Person person3 = new Person();
+        person3.setId(UUID.randomUUID());
+        person3.setName("Filho");
+
+        SplitRule existing = new SplitRule();
+        existing.setReferenceMonth(3);
+        existing.setReferenceYear(2026);
+        SplitRuleItem item1 = new SplitRuleItem();
+        item1.setSplitRule(existing);
+        item1.setPerson(person1);
+        item1.setPercentage(BigDecimal.valueOf(50));
+        SplitRuleItem item2 = new SplitRuleItem();
+        item2.setSplitRule(existing);
+        item2.setPerson(person2);
+        item2.setPercentage(BigDecimal.valueOf(50));
+        existing.getItems().add(item1);
+        existing.getItems().add(item2);
+
+        // mantém person1, remove person2, adiciona person3 — person1 aparece nos
+        // itens antigos E nos novos, que é justamente o caso que colide com
+        // UNIQUE(split_rule_id, person_id) se o saveAndFlush() for removido
+        var request = new SplitRuleRequest(List.of(
+                new SplitRuleItemRequest(person1.getId(), BigDecimal.valueOf(40)),
+                new SplitRuleItemRequest(person3.getId(), BigDecimal.valueOf(60))
+        ));
+
+        List<Integer> itemCountAtFlushTime = new java.util.ArrayList<>();
+        when(splitRuleRepository.findByReferenceMonthAndReferenceYear(3, 2026))
+                .thenReturn(Optional.of(existing));
+        when(splitRuleRepository.saveAndFlush(any())).thenAnswer(inv -> {
+            SplitRule arg = inv.getArgument(0);
+            itemCountAtFlushTime.add(arg.getItems().size());
+            return arg;
+        });
+        when(splitRuleRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(personRepository.findById(person1.getId())).thenReturn(Optional.of(person1));
+        when(personRepository.findById(person3.getId())).thenReturn(Optional.of(person3));
+
+        SplitRuleResponse response = service.save(2026, 3, request);
+
+        assertThat(response.items()).hasSize(2);
+        assertThat(response.items())
+                .extracting(item -> item.person().id())
+                .containsExactlyInAnyOrder(person1.getId(), person3.getId());
+
+        // flush precisa acontecer com a coleção já esvaziada, antes dos itens
+        // novos (inclusive o de person1, que se repete) serem montados
+        assertThat(itemCountAtFlushTime).containsExactly(0);
+    }
+
+    @Test
     void findByMonth_naoEncontrada_lancaBusinessException404() {
         when(splitRuleRepository.findByReferenceMonthAndReferenceYear(4, 2026))
                 .thenReturn(Optional.empty());
