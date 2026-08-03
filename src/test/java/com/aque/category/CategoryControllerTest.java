@@ -2,6 +2,8 @@ package com.aque.category;
 
 import com.aque.BaseIntegrationTest;
 import com.aque.category.dto.request.CategoryRequest;
+import com.aque.recurring.RecurringTransactionRepository;
+import com.aque.transaction.TransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +23,22 @@ class CategoryControllerTest extends BaseIntegrationTest {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
+    private RecurringTransactionRepository recurringRepository;
+
     private Category predefined;
     private Category custom;
 
     @BeforeEach
     void setupCategories() {
+        // transactions e recurring_transactions têm FK pra categories — precisa
+        // limpar antes, senão o deleteAll() de uma categoria deixada por outra
+        // classe de teste (ex.: RecurringTransactionControllerTest) quebra aqui
+        transactionRepository.deleteAll();
+        recurringRepository.deleteAll();
         categoryRepository.deleteAll();
 
         predefined = new Category();
