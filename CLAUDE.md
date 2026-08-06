@@ -41,6 +41,8 @@ Cross-cutting concerns live outside the domains: `config/` (`SecurityConfig`, `O
 
 Stateless JWT auth. `JwtFilter` validates the `Authorization: Bearer` header on every request; `JwtService` issues/parses tokens (secret + expiry via `app.jwt.secret` / `app.jwt.expiration-ms`, both env-overridable — see `.env.example`). No sessions.
 
+**401 vs 403 contract with `aque-web`:** `401` is returned only by `GlobalExceptionHandler.handleBadCredentials` for wrong credentials at `POST /auth/login`. A missing, invalid, or expired token on any protected route falls through to Spring Security's default (`403`), since `JwtFilter` never populates the `SecurityContext` for those requests — there's no custom `AuthenticationEntryPoint` overriding it. `aque-web`'s `authInterceptor` depends on this exact split to decide when to force a logout. If this ever changes (e.g. adding an `AuthenticationEntryPoint` that returns 401 for missing tokens), update the matching note in `aque-web/CLAUDE.md` and its `authInterceptor`.
+
 ### Database
 
 PostgreSQL, schema managed by **Flyway** (`src/main/resources/db/migration/V*.sql`, `ddl-auto=validate` — never let Hibernate auto-generate schema, add a new `V{n}__description.sql` migration instead). Tests use Testcontainers to spin up a real Postgres.
