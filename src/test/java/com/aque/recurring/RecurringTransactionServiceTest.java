@@ -92,6 +92,16 @@ class RecurringTransactionServiceTest {
     }
 
     @Test
+    void create_typeDivergenteDaCategoria_lancaBusinessException400() {
+        var request = new RecurringTransactionRequest("Salário", category.getId(), CategoryType.RECEITA, BigDecimal.valueOf(1500));
+        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
+
+        assertThatThrownBy(() -> service.create(request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void create_categoriaNaoEncontrada_lancaBusinessException404() {
         UUID categoryId = UUID.randomUUID();
         var request = new RecurringTransactionRequest("Aluguel", categoryId, CategoryType.DESPESA, BigDecimal.valueOf(1500));
@@ -113,6 +123,17 @@ class RecurringTransactionServiceTest {
 
         assertThat(response.description()).isEqualTo("Aluguel Novo");
         assertThat(response.defaultAmount()).isEqualByComparingTo("1600");
+    }
+
+    @Test
+    void update_typeDivergenteDaCategoria_lancaBusinessException400() {
+        var request = new RecurringTransactionRequest("Aluguel Novo", category.getId(), CategoryType.RECEITA, BigDecimal.valueOf(1600));
+        when(recurringRepository.findById(recurring.getId())).thenReturn(Optional.of(recurring));
+        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
+
+        assertThatThrownBy(() -> service.update(recurring.getId(), request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
