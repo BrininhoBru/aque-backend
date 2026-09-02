@@ -53,20 +53,11 @@
             </encoder>
         </appender>
 
-        <appender name="LOGHUB" class="io.loghub.logger.appender.HttpLogAppender">
-            <endpoint>${LOGHUB_API_URL:-http://172.18.0.1:8080/api/logs}</endpoint>
-            <application>aque-backend</application>
-            <environment>production</environment>
-            <apiKey>${LOGHUB_API_KEY:-}</apiKey>
-            <minimumLevel>INFO</minimumLevel>
-        </appender>
-
         <logger name="com.aque" level="INFO"/>
         <logger name="org.flywaydb" level="INFO"/>
 
         <root level="WARN">
             <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="LOGHUB"/>
         </root>
     </springProfile>
 
