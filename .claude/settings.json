@@ -1,1 +1,20 @@
-{}
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw test*)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git status)",
+      "Bash(git commit *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)",
+      "Bash(git push origin main)",
+      "Read(./**/.env)",
+      "Read(./**/*.pem)",
+      "Read(./**/secrets/**)"
+    ]
+  },
+  "hooks": {}
+}
