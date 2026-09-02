@@ -8,11 +8,9 @@ FROM --platform=$BUILDPLATFORM maven:3.9-eclipse-temurin-25 AS build
 
 WORKDIR /app
 COPY pom.xml .
-RUN --mount=type=secret,id=maven_settings \
-    mvn -s /run/secrets/maven_settings dependency:go-offline -q
+RUN mvn dependency:go-offline -q
 COPY src ./src
-RUN --mount=type=secret,id=maven_settings \
-    mvn -s /run/secrets/maven_settings clean package -DskipTests -q
+RUN mvn clean package -DskipTests -q
 
 # Stage 2: Runtime
 FROM eclipse-temurin:25-jre

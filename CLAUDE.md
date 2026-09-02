@@ -58,7 +58,7 @@ PostgreSQL, schema managed by **Flyway** (`src/main/resources/db/migration/V*.sq
 Swagger UI at `/api/swagger-ui.html`, OpenAPI JSON at `/api/v3/api-docs` (springdoc).
 
 ### CORS
-Explicit `CorsConfigurationSource` in `SecurityConfig`, allowed origins from `app.cors.allowed-origins` (env `CORS_ALLOWED_ORIGINS`, empty by default — same-origin only until a split-origin deploy sets it).
+Explicit `CorsConfigurationSource` in `SecurityConfig`, allowed origins from `app.cors.allowed-origins` (env `CORS_ALLOWED_ORIGINS`, empty by default). **Required in local dev**: `aque-web`'s dev proxy uses `changeOrigin: true`, so the backend sees a `Host` header that doesn't match the browser's `Origin` header — Spring treats this as a real cross-origin request even though it's same-origin from the browser's point of view. Without `CORS_ALLOWED_ORIGINS=http://localhost:4200` (or whatever port the dev server uses) in `.env`, every request from `aque-web` — including `/auth/login` — is rejected with `403` before it reaches any controller. In production this stays empty, since Nginx proxies same-origin with no `changeOrigin` rewrite.
 
 ## Reference docs
 
@@ -74,7 +74,7 @@ Narrower, path-triggered conventions live in `.claude/rules/` (style, testing, s
 
 ## Workflow
 
-- Never commit directly to `main` — always via PR (see `.claude/rules/standards.md`).
+- Never commit directly to `main` or `dev` — always via PR (see `.claude/rules/standards.md`). PRs target `dev`; `main` only moves via a `dev` → `main` release PR, which is what triggers `docker-publish.yml` (a push to `dev` builds/deploys nothing).
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore:`...) — the `commit-msg` skill generates and commits directly.
 - Known gaps against `.claude/rules/standards.md`'s mandatory tooling: no automated lint/format, no pre-commit hook, no semantic-release/automatic versioning, and CI (`docker-publish.yml`) doesn't gate on lint/tests — none of that tooling is set up in this repo yet.
 
