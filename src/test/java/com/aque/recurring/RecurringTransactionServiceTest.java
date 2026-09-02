@@ -81,7 +81,7 @@ class RecurringTransactionServiceTest {
 
     @Test
     void create_categoriaExistente_criaComoAtivo() {
-        var request = new RecurringTransactionRequest("Aluguel", category.getId(), CategoryType.DESPESA, BigDecimal.valueOf(1500));
+        var request = new RecurringTransactionRequest("Aluguel", category.getId(), CategoryType.DESPESA, BigDecimal.valueOf(1500), null);
         when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
         when(recurringRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -93,7 +93,7 @@ class RecurringTransactionServiceTest {
 
     @Test
     void create_typeDivergenteDaCategoria_lancaBusinessException400() {
-        var request = new RecurringTransactionRequest("Salário", category.getId(), CategoryType.RECEITA, BigDecimal.valueOf(1500));
+        var request = new RecurringTransactionRequest("Salário", category.getId(), CategoryType.RECEITA, BigDecimal.valueOf(1500), null);
         when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
 
         assertThatThrownBy(() -> service.create(request))
@@ -104,7 +104,7 @@ class RecurringTransactionServiceTest {
     @Test
     void create_categoriaNaoEncontrada_lancaBusinessException404() {
         UUID categoryId = UUID.randomUUID();
-        var request = new RecurringTransactionRequest("Aluguel", categoryId, CategoryType.DESPESA, BigDecimal.valueOf(1500));
+        var request = new RecurringTransactionRequest("Aluguel", categoryId, CategoryType.DESPESA, BigDecimal.valueOf(1500), null);
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.create(request))
@@ -114,7 +114,7 @@ class RecurringTransactionServiceTest {
 
     @Test
     void update_recorrenteExistente_atualizaComSucesso() {
-        var request = new RecurringTransactionRequest("Aluguel Novo", category.getId(), CategoryType.DESPESA, BigDecimal.valueOf(1600));
+        var request = new RecurringTransactionRequest("Aluguel Novo", category.getId(), CategoryType.DESPESA, BigDecimal.valueOf(1600), null);
         when(recurringRepository.findById(recurring.getId())).thenReturn(Optional.of(recurring));
         when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
         when(recurringRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -127,7 +127,7 @@ class RecurringTransactionServiceTest {
 
     @Test
     void update_typeDivergenteDaCategoria_lancaBusinessException400() {
-        var request = new RecurringTransactionRequest("Aluguel Novo", category.getId(), CategoryType.RECEITA, BigDecimal.valueOf(1600));
+        var request = new RecurringTransactionRequest("Aluguel Novo", category.getId(), CategoryType.RECEITA, BigDecimal.valueOf(1600), null);
         when(recurringRepository.findById(recurring.getId())).thenReturn(Optional.of(recurring));
         when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
 
@@ -142,7 +142,7 @@ class RecurringTransactionServiceTest {
         when(recurringRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.update(id,
-                new RecurringTransactionRequest("X", category.getId(), CategoryType.DESPESA, BigDecimal.ONE)))
+                new RecurringTransactionRequest("X", category.getId(), CategoryType.DESPESA, BigDecimal.ONE, null)))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(HttpStatus.NOT_FOUND);
     }

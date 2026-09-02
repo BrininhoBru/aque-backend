@@ -34,14 +34,19 @@ class RecurringTransactionControllerTest extends BaseIntegrationTest {
     @Autowired
     private TransactionRepository transactionRepository;
 
+    @Autowired
+    private RecurringGenerationRepository recurringGenerationRepository;
+
     private Category category;
     private RecurringTransaction recurring;
 
     @BeforeEach
     void setupRecurring() {
-        // /recurring/generate/{year}/{month} cria Transaction reais ligadas ao
-        // recorrente via FK — precisa limpar antes de apagar recurring_transactions
+        // /recurring/generate/{year}/{month} cria Transaction e RecurringGeneration
+        // reais ligadas ao recorrente via FK — precisa limpar antes de apagar
+        // recurring_transactions
         transactionRepository.deleteAll();
+        recurringGenerationRepository.deleteAll();
         recurringRepository.deleteAll();
         categoryRepository.deleteAll();
 
@@ -78,7 +83,7 @@ class RecurringTransactionControllerTest extends BaseIntegrationTest {
     @Test
     void criarRecorrente_deveRetornar201() throws Exception {
         String body = objectMapper.writeValueAsString(
-                new RecurringTransactionRequest("Internet", category.getId(), CategoryType.DESPESA, BigDecimal.valueOf(100)));
+                new RecurringTransactionRequest("Internet", category.getId(), CategoryType.DESPESA, BigDecimal.valueOf(100), null));
 
         mockMvc.perform(post("/recurring")
                         .header("Authorization", token)
@@ -92,7 +97,7 @@ class RecurringTransactionControllerTest extends BaseIntegrationTest {
     @Test
     void criarRecorrente_categoriaInexistente_deveRetornar404() throws Exception {
         String body = objectMapper.writeValueAsString(
-                new RecurringTransactionRequest("Internet", UUID.randomUUID(), CategoryType.DESPESA, BigDecimal.valueOf(100)));
+                new RecurringTransactionRequest("Internet", UUID.randomUUID(), CategoryType.DESPESA, BigDecimal.valueOf(100), null));
 
         mockMvc.perform(post("/recurring")
                         .header("Authorization", token)
@@ -104,7 +109,7 @@ class RecurringTransactionControllerTest extends BaseIntegrationTest {
     @Test
     void editarRecorrente_deveRetornar200() throws Exception {
         String body = objectMapper.writeValueAsString(
-                new RecurringTransactionRequest("Aluguel Novo", category.getId(), CategoryType.DESPESA, BigDecimal.valueOf(1600)));
+                new RecurringTransactionRequest("Aluguel Novo", category.getId(), CategoryType.DESPESA, BigDecimal.valueOf(1600), null));
 
         mockMvc.perform(put("/recurring/" + recurring.getId())
                         .header("Authorization", token)

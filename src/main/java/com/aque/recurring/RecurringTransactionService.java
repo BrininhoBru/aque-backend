@@ -40,6 +40,7 @@ public class RecurringTransactionService {
         recurring.setCategory(category);
         recurring.setType(request.type());
         recurring.setDefaultAmount(request.defaultAmount());
+        recurring.setDueDay(request.dueDay());
         recurring.setActive(true);
 
         return RecurringTransactionResponse.from(recurringRepository.save(recurring));
@@ -54,6 +55,7 @@ public class RecurringTransactionService {
         recurring.setCategory(category);
         recurring.setType(request.type());
         recurring.setDefaultAmount(request.defaultAmount());
+        recurring.setDueDay(request.dueDay());
 
         return RecurringTransactionResponse.from(recurringRepository.save(recurring));
     }
