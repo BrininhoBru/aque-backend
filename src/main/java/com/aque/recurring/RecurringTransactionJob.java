@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,6 +21,7 @@ public class RecurringTransactionJob {
 
     private final RecurringTransactionRepository recurringRepository;
     private final TransactionRepository transactionRepository;
+    private final RecurringGenerationRepository recurringGenerationRepository;
 
     @Scheduled(cron = "0 0 0 1 * *")
     @Transactional
@@ -37,12 +39,12 @@ public class RecurringTransactionJob {
 
         for (RecurringTransaction recurring : actives) {
             try {
-                boolean alreadyExists = transactionRepository
+                boolean alreadyGenerated = recurringGenerationRepository
                         .existsByRecurringIdAndReferenceMonthAndReferenceYear(
                                 recurring.getId(), month, year
                         );
 
-                if (alreadyExists) {
+                if (alreadyGenerated) {
                     log.debug("Recorrente {} já gerado para {}/{} — ignorando",
                             recurring.getId(), month, year);
                     continue;
@@ -51,6 +53,7 @@ public class RecurringTransactionJob {
                 Transaction transaction = getTransaction(year, month, recurring);
 
                 transactionRepository.save(transaction);
+                recurringGenerationRepository.save(generation(recurring.getId(), month, year));
                 count++;
             } catch (RuntimeException e) {
                 // isola a falha: uma recorrência com problema não pode travar a geração das demais
@@ -75,6 +78,26 @@ public class RecurringTransactionJob {
         transaction.setStatus(TransactionStatus.PENDENTE);
         transaction.setRecurringId(recurring.getId());
         transaction.setOverride(false);
+        transaction.setDueDate(dueDate(year, month, recurring.getDueDay()));
         return transaction;
+    }
+
+    // dueDay é opcional — sem ele, a instância gerada não tem vencimento (mesmo
+    // comportamento de antes do dueDay existir). Quando presente, clampa pro último dia
+    // real do mês (ex.: dueDay=31 em fevereiro vira 28 ou 29).
+    private static LocalDate dueDate(int year, int month, Integer dueDay) {
+        if (dueDay == null) {
+            return null;
+        }
+        int lastDayOfMonth = YearMonth.of(year, month).lengthOfMonth();
+        return LocalDate.of(year, month, Math.min(dueDay, lastDayOfMonth));
+    }
+
+    private static RecurringGeneration generation(UUID recurringId, int month, int year) {
+        RecurringGeneration generation = new RecurringGeneration();
+        generation.setRecurringId(recurringId);
+        generation.setReferenceMonth(month);
+        generation.setReferenceYear(year);
+        return generation;
     }
 }

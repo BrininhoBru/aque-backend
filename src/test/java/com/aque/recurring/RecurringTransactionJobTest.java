@@ -4,12 +4,15 @@ import com.aque.BaseIntegrationTest;
 import com.aque.category.Category;
 import com.aque.category.CategoryRepository;
 import com.aque.category.CategoryType;
+import com.aque.transaction.Transaction;
 import com.aque.transaction.TransactionRepository;
+import com.aque.transaction.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,11 +30,18 @@ class RecurringTransactionJobTest extends BaseIntegrationTest {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private TransactionService transactionService;
+
+    @Autowired
+    private RecurringGenerationRepository recurringGenerationRepository;
+
     private RecurringTransaction recurring;
 
     @BeforeEach
     void setup() {
         transactionRepository.deleteAll();
+        recurringGenerationRepository.deleteAll();
         recurringRepository.deleteAll();
         categoryRepository.deleteAll();
 
@@ -73,5 +83,64 @@ class RecurringTransactionJobTest extends BaseIntegrationTest {
         int count = job.generate(2026, 3);
         assertThat(count).isEqualTo(0);
         assertThat(transactionRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void generate_moverInstanciaParaOutroMes_naoDuplicaAoGerarDeNovo() {
+        job.generate(2026, 3);
+        Transaction generated = transactionRepository.findAll().getFirst();
+
+        // move direto pelo repositório (não pelo TransactionService.update()) — o que
+        // este teste verifica é a idempotência do job diante de uma transação movida de
+        // mês, não o fluxo de edição em si
+        generated.setReferenceMonth(4);
+        transactionRepository.save(generated);
+
+        int count = job.generate(2026, 3);
+
+        assertThat(count).isZero();
+        assertThat(transactionRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    void generate_apagarInstanciaGerada_naoRecriaAoGerarDeNovo() {
+        job.generate(2026, 3);
+        Transaction generated = transactionRepository.findAll().getFirst();
+        transactionService.delete(generated.getId());
+
+        int count = job.generate(2026, 3);
+
+        assertThat(count).isZero();
+        assertThat(transactionRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void generate_recorrenteComDueDay_geraTransacaoComVencimentoNoMesDeReferencia() {
+        recurring.setDueDay(5);
+        recurringRepository.save(recurring);
+
+        job.generate(2026, 3);
+
+        Transaction generated = transactionRepository.findAll().getFirst();
+        assertThat(generated.getDueDate()).isEqualTo(LocalDate.of(2026, 3, 5));
+    }
+
+    @Test
+    void generate_recorrenteComDueDayMaiorQueUltimoDiaDoMes_clampiaParaOUltimoDia() {
+        recurring.setDueDay(31);
+        recurringRepository.save(recurring);
+
+        job.generate(2026, 2); // fevereiro/2026 tem 28 dias
+
+        Transaction generated = transactionRepository.findAll().getFirst();
+        assertThat(generated.getDueDate()).isEqualTo(LocalDate.of(2026, 2, 28));
+    }
+
+    @Test
+    void generate_recorrenteSemDueDay_geraTransacaoSemVencimento() {
+        job.generate(2026, 3);
+
+        Transaction generated = transactionRepository.findAll().getFirst();
+        assertThat(generated.getDueDate()).isNull();
     }
 }
