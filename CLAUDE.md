@@ -18,9 +18,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./mvnw clean package
 ```
 
+Lint/format: no formatter is configured yet (no Spotless/Checkstyle, no `.editorconfig`) —
+match the indentation and style of neighboring files.
+
 ## Architecture
 
-**aque-backend** is a Spring Boot 3 (Java 25) REST API for a personal finance app, serving the `aque-web` Angular SPA. All routes are under `/api` (`server.servlet.context-path`).
+**aque-backend** is a Spring Boot 4 (Java 25) REST API for a personal finance app, serving the `aque-web` Angular SPA. All routes are under `/api` (`server.servlet.context-path`).
 
 ### Package-by-feature layout
 
@@ -32,10 +35,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   <Domain>Service.java
   <Domain>Repository.java
   <Domain>.java          # JPA entity
-  dto/                   # request/response DTOs
+  dto/request/, dto/response/   # request/response DTOs (records)
 ```
 
-Cross-cutting concerns live outside the domains: `config/` (`SecurityConfig`, `OpenApiConfig`), `security/` (`JwtFilter`, `JwtService`, `CustomUserDetailsService`), `exception/` (global exception handling).
+Cross-cutting concerns live outside the domains: `config/` (`SecurityConfig`, `OpenApiConfig`), `security/` (`JwtFilter`, `JwtService`, `CustomUserDetailsService`), `exception/` (global exception handling), `health/` (Docker healthcheck endpoint).
 
 ### Auth
 
@@ -61,8 +64,24 @@ Explicit `CorsConfigurationSource` in `SecurityConfig`, allowed origins from `ap
 
 Deeper, verified-against-code analysis lives in `.claude/docs/`: `ARCHITECTURE.md` (layers, data flow, anti-patterns), `CONVENTIONS.md` (naming, error handling, style), `STACK.md` (dependencies, versions), `STRUCTURE.md` (where to add new code), `TESTING.md` (test patterns/fixtures), `INTEGRATIONS.md` (external services, env vars), `CONCERNS.md` (tech debt, known bugs, fragile areas). Read the relevant one before a structural change or when this file doesn't have the answer.
 
+Narrower, path-triggered conventions live in `.claude/rules/` (style, testing, security, API design, migrations, team-wide standards) and load automatically based on the files you touch.
+
 ## Key decisions
 
 - **Single-admin, no ownership model** — personal/household finance app, not multi-tenant SaaS. Don't add `owner_id`/multi-tenancy without a real second-user requirement.
 - **Flyway over Hibernate auto-DDL** — predictable, reviewable schema changes in production.
 - **Stateless JWT, no sessions** — simple REST API consumed by one SPA (`aque-web`).
+
+## Workflow
+
+- Never commit directly to `main` — always via PR (see `.claude/rules/standards.md`).
+- Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore:`...) — the `commit-msg` skill generates and commits directly.
+- Known gaps against `.claude/rules/standards.md`'s mandatory tooling: no automated lint/format, no pre-commit hook, no semantic-release/automatic versioning, and CI (`docker-publish.yml`) doesn't gate on lint/tests — none of that tooling is set up in this repo yet.
+
+## Common flows
+
+- Security review of a diff: `/security-review`
+- Generate a PR description from the git diff: `/gerar-pr`
+- Generate a commit message (Conventional Commits, English, no ticket prefix — this team doesn't use a ticket/board on branch names): skill `commit-msg` — triggers automatically on "commit this" / "write a commit message", and commits directly
+- Standalone code review (no edits): delegate to the `code-reviewer` subagent
+- Investigate a bug/failing test: delegate to the `debugger` subagent
