@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -94,8 +95,7 @@ class PersonControllerTest extends BaseIntegrationTest {
     @Test
     void excluirPessoaVinculadaARegraDeDivisao_deveRetornar400() throws Exception {
         SplitRule rule = new SplitRule();
-        rule.setReferenceMonth(3);
-        rule.setReferenceYear(2026);
+        rule.setEffectiveFrom(LocalDate.of(2026, 3, 1));
         SplitRuleItem item = new SplitRuleItem();
         item.setSplitRule(rule);
         item.setPerson(person);

@@ -83,8 +83,7 @@ class DashboardControllerTest extends BaseIntegrationTest {
         personRepository.save(p3);
 
         SplitRule rule = new SplitRule();
-        rule.setReferenceMonth(3);
-        rule.setReferenceYear(2026);
+        rule.setEffectiveFrom(LocalDate.of(2026, 3, 1));
         rule.getItems().addAll(List.of(
                 item(rule, p1, "33.34"),
                 item(rule, p2, "33.33"),

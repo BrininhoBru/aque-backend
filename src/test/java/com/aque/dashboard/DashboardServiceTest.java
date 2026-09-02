@@ -20,8 +20,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -81,7 +83,8 @@ class DashboardServiceTest {
 
     @Test
     void getSplit_regraNaoConfigurada_lancaBusinessException404() {
-        when(splitRuleRepository.findByReferenceMonthAndReferenceYear(4, 2026))
+        when(splitRuleRepository.findTopByEffectiveFromLessThanEqualOrderByEffectiveFromDescCreatedAtDesc(
+                LocalDate.of(2026, 4, 1)))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getSplit(2026, 4))
@@ -92,13 +95,13 @@ class DashboardServiceTest {
     @Test
     void getSplit_ultimoItemAbsorveORestoDoArredondamento() {
         SplitRule rule = new SplitRule();
-        rule.setReferenceMonth(3);
-        rule.setReferenceYear(2026);
+        rule.setEffectiveFrom(LocalDate.of(2026, 3, 1));
         rule.getItems().add(item(rule, "A", "33.34"));
         rule.getItems().add(item(rule, "B", "33.33"));
         rule.getItems().add(item(rule, "C", "33.33"));
 
-        when(splitRuleRepository.findByReferenceMonthAndReferenceYear(3, 2026))
+        when(splitRuleRepository.findTopByEffectiveFromLessThanEqualOrderByEffectiveFromDescCreatedAtDesc(
+                LocalDate.of(2026, 3, 1)))
                 .thenReturn(Optional.of(rule));
         when(transactionRepository.sumExpected(3, 2026, CategoryType.DESPESA))
                 .thenReturn(new BigDecimal("100.01"));
@@ -116,8 +119,13 @@ class DashboardServiceTest {
         assertThat(result.items().get(2).amount()).isEqualByComparingTo("33.34");
     }
 
+    private long nextPersonId = 1;
+
     private SplitRuleItem item(SplitRule rule, String personName, String percentage) {
         Person person = new Person();
+        // ID sequencial (não aleatório) pra manter a ordem de chamada estável após o sort
+        // por getPerson().getId() em DashboardService.getSplit
+        person.setId(new UUID(0, nextPersonId++));
         person.setName(personName);
         SplitRuleItem item = new SplitRuleItem();
         item.setSplitRule(rule);

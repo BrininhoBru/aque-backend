@@ -4,10 +4,11 @@ import com.aque.person.dto.response.PersonResponse;
 import com.aque.split.SplitRule;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-public record SplitRuleResponse(UUID id, Integer referenceMonth, Integer referenceYear,
+public record SplitRuleResponse(UUID id, LocalDate effectiveFrom,
                                 List<SplitRuleItemResponse> items) {
     public record SplitRuleItemResponse(
             PersonResponse person,
@@ -18,8 +19,7 @@ public record SplitRuleResponse(UUID id, Integer referenceMonth, Integer referen
     public static SplitRuleResponse from(SplitRule rule) {
         return new SplitRuleResponse(
                 rule.getId(),
-                rule.getReferenceMonth(),
-                rule.getReferenceYear(),
+                rule.getEffectiveFrom(),
                 rule.getItems().stream()
                         .map(item -> new SplitRuleItemResponse(
                                 PersonResponse.from(item.getPerson()),
