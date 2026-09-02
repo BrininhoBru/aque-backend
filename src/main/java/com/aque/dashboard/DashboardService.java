@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +99,7 @@ public class DashboardService {
 
     public SplitResultResponse getSplit(int year, int month) {
         SplitRule rule = splitRuleRepository
-                .findByReferenceMonthAndReferenceYear(month, year)
+                .findTopByEffectiveFromLessThanEqualOrderByEffectiveFromDescCreatedAtDesc(LocalDate.of(year, month, 1))
                 .orElseThrow(() -> new BusinessException(
                         "Regra de divisão não configurada para " + month + "/" + year,
                         HttpStatus.NOT_FOUND

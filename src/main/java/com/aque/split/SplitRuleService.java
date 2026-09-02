@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -23,31 +24,21 @@ public class SplitRuleService {
 
     public SplitRuleResponse findByMonth(int year, int month) {
         return splitRuleRepository
-                .findByReferenceMonthAndReferenceYear(month, year)
+                .findTopByEffectiveFromLessThanEqualOrderByEffectiveFromDescCreatedAtDesc(LocalDate.of(year, month, 1))
                 .map(SplitRuleResponse::from)
                 .orElseThrow(() -> new BusinessException(
-                        "Regra de divisão não encontrada para " + month + "/" + year,
+                        "Regra de divisão não configurada para " + month + "/" + year,
                         HttpStatus.NOT_FOUND
                 ));
     }
 
     @Transactional
-    public SplitRuleResponse save(int year, int month, SplitRuleRequest request) {
+    public SplitRuleResponse save(SplitRuleRequest request) {
         validatePercentages(request.items());
+        validateNoDuplicatePersons(request.items());
 
-        SplitRule rule = splitRuleRepository
-                .findByReferenceMonthAndReferenceYear(month, year)
-                .orElseGet(() -> {
-                    SplitRule newRule = new SplitRule();
-                    newRule.setReferenceMonth(month);
-                    newRule.setReferenceYear(year);
-                    return newRule;
-                });
-
-        rule.getItems().clear();
-        // flush antes de inserir os itens novos: sem isso o Hibernate manda os INSERT
-        // antes do DELETE dos órfãos e colide com a UNIQUE(split_rule_id, person_id)
-        splitRuleRepository.saveAndFlush(rule);
+        SplitRule rule = new SplitRule();
+        rule.setEffectiveFrom(LocalDate.now().withDayOfMonth(1));
 
         for (SplitRuleItemRequest itemRequest : request.items()) {
             Person person = personRepository.findById(itemRequest.personId())
@@ -74,6 +65,20 @@ public class SplitRuleService {
         if (total.compareTo(BigDecimal.valueOf(100)) != 0) {
             throw new BusinessException(
                     "A soma dos percentuais deve ser exatamente 100%. Total informado: " + total + "%",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    private void validateNoDuplicatePersons(List<SplitRuleItemRequest> items) {
+        long distinctCount = items.stream()
+                .map(SplitRuleItemRequest::personId)
+                .distinct()
+                .count();
+
+        if (distinctCount != items.size()) {
+            throw new BusinessException(
+                    "Uma pessoa não pode aparecer mais de uma vez na mesma regra de divisão",
                     HttpStatus.BAD_REQUEST
             );
         }
