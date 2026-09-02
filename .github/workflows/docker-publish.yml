@@ -52,20 +52,6 @@ jobs:
             type=raw,value=latest
             type=sha,prefix=sha-
 
-      - name: Preparar settings.xml do Maven (credencial GitHub Packages)
-        run: |
-          cat > /tmp/maven-settings.xml <<EOF
-          <settings>
-            <servers>
-              <server>
-                <id>github</id>
-                <username>${{ github.actor }}</username>
-                <password>${{ secrets.LOGHUB_PACKAGES_READ_TOKEN }}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
-
       - name: Build e Push da imagem
         uses: docker/build-push-action@v5
         with:
@@ -76,5 +62,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          secret-files: |
-            maven_settings=/tmp/maven-settings.xml
