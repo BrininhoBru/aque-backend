@@ -10,4 +10,8 @@ public interface PersonRepository extends JpaRepository<Person, UUID> {
 
     @Query("SELECT COUNT(i) > 0 FROM SplitRuleItem i WHERE i.person.id = :personId")
     boolean isLinkedToSplitRule(@Param("personId") UUID personId);
+
+    boolean existsByNameIgnoreCase(String name);
+
+    boolean existsByNameIgnoreCaseAndIdNot(String name, UUID id);
 }

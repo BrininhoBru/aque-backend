@@ -4,6 +4,7 @@ import com.aque.category.Category;
 import com.aque.category.CategoryRepository;
 import com.aque.category.CategoryType;
 import com.aque.exception.BusinessException;
+import com.aque.transaction.dto.request.PaymentUpdateRequest;
 import com.aque.transaction.dto.request.TransactionRequest;
 import com.aque.transaction.dto.response.TransactionResponse;
 import jakarta.persistence.criteria.Predicate;
@@ -43,6 +44,7 @@ public class TransactionService {
 
     public TransactionResponse create(TransactionRequest request) {
         Category category = findCategory(request.categoryId());
+        validateTypeMatchesCategory(request.type(), category);
 
         Transaction transaction = new Transaction();
         mapperTrasaction(request, transaction, category);
@@ -53,6 +55,7 @@ public class TransactionService {
     public TransactionResponse update(UUID id, TransactionRequest request) {
         Transaction transaction = findById(id);
         Category category = findCategory(request.categoryId());
+        validateTypeMatchesCategory(request.type(), category);
 
         mapperTrasaction(request, transaction, category);
 
@@ -72,6 +75,17 @@ public class TransactionService {
         transaction.setAmountExpected(request.amountExpected());
         transaction.setDueDate(request.dueDate());
         applyPayment(transaction, request.amountPaid());
+    }
+
+    public TransactionResponse updatePayment(UUID id, PaymentUpdateRequest request) {
+        Transaction transaction = findById(id);
+        applyPayment(transaction, request.amountPaid());
+
+        if (transaction.getRecurringId() != null) {
+            transaction.setOverride(true);
+        }
+
+        return TransactionResponse.from(transactionRepository.save(transaction));
     }
 
     public void delete(UUID id) {
@@ -94,6 +108,15 @@ public class TransactionService {
                         "Lançamento não encontrado",
                         HttpStatus.NOT_FOUND
                 ));
+    }
+
+    private void validateTypeMatchesCategory(CategoryType type, Category category) {
+        if (type != category.getType()) {
+            throw new BusinessException(
+                    "Tipo do lançamento não corresponde ao tipo da categoria",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     private Category findCategory(UUID categoryId) {

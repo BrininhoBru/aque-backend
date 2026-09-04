@@ -13,7 +13,8 @@ public record RecurringTransactionResponse(
         CategoryResponse category,
         CategoryType type,
         BigDecimal defaultAmount,
-        boolean active
+        boolean active,
+        Integer dueDay
 ) {
     public static RecurringTransactionResponse from(RecurringTransaction recurring) {
         return new RecurringTransactionResponse(
@@ -22,7 +23,8 @@ public record RecurringTransactionResponse(
                 CategoryResponse.from(recurring.getCategory()),
                 recurring.getType(),
                 recurring.getDefaultAmount(),
-                recurring.isActive()
+                recurring.isActive(),
+                recurring.getDueDay()
         );
     }
 }

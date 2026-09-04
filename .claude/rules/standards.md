@@ -60,9 +60,14 @@ Uma task só é considerada concluída quando:
 
 ## Template de Pull Request
 Todo PR segue esta estrutura (a skill `/gerar-pr` já gera isso automaticamente):
-- **Contexto**: o que motivou a mudança
+- **Título**: Conventional Commits (`tipo(escopo): resumo`, `!` pra breaking change)
+- **Issue relacionada**: `Closes #N` / `Relates to #N`, quando houver
+- **Resumo**: o que foi feito, em 1-2 frases
+- **Motivação**: o que motivou a mudança
 - **Mudanças**: lista do que foi alterado
-- **Como testar**: passos para validar manualmente
+- **Como testar**: passos concretos e verificáveis (ex.: `./mvnw test -Dtest=...`)
+- **Risco/Impacto**: migration Flyway nova, breaking change de API pro `aque-web`, ou variável de
+  ambiente nova?
 - **Checklist**: testes adicionados, docs atualizadas, breaking changes (sim/não)
 
 ## Logging estruturado

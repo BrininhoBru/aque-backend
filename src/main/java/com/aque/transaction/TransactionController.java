@@ -1,6 +1,7 @@
 package com.aque.transaction;
 
 import com.aque.category.CategoryType;
+import com.aque.transaction.dto.request.PaymentUpdateRequest;
 import com.aque.transaction.dto.request.TransactionRequest;
 import com.aque.transaction.dto.response.TransactionResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -82,6 +83,23 @@ public class TransactionController {
             @Parameter(description = "ID do lançamento") @PathVariable UUID id,
             @Valid @RequestBody TransactionRequest request) {
         return ResponseEntity.ok(transactionService.update(id, request));
+    }
+
+    @Operation(
+            summary = "Marcar pagamento",
+            description = "Atualiza só amountPaid/status do lançamento (PAGO se valor informado, PENDENTE se nulo), sem tocar nos outros campos.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Pagamento atualizado com sucesso",
+                            content = @Content(schema = @Schema(implementation = TransactionResponse.class))),
+                    @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Lançamento não encontrado", content = @Content)
+            }
+    )
+    @PatchMapping("/{id}/payment")
+    public ResponseEntity<TransactionResponse> updatePayment(
+            @Parameter(description = "ID do lançamento") @PathVariable UUID id,
+            @Valid @RequestBody PaymentUpdateRequest request) {
+        return ResponseEntity.ok(transactionService.updatePayment(id, request));
     }
 
     @Operation(

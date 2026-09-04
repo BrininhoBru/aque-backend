@@ -60,14 +60,48 @@ class PersonServiceTest {
     }
 
     @Test
+    void create_nomeDuplicado_lancaBusinessException400() {
+        var request = new PersonRequest("eu");
+        when(personRepository.existsByNameIgnoreCase("eu")).thenReturn(true);
+
+        assertThatThrownBy(() -> service.create(request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void update_pessoaExistente_atualizaComSucesso() {
         var request = new PersonRequest("Nome Atualizado");
         when(personRepository.findById(person.getId())).thenReturn(Optional.of(person));
+        when(personRepository.existsByNameIgnoreCaseAndIdNot("Nome Atualizado", person.getId())).thenReturn(false);
         when(personRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         PersonResponse response = service.update(person.getId(), request);
 
         assertThat(response.name()).isEqualTo("Nome Atualizado");
+    }
+
+    @Test
+    void update_renomeiaParaOProprioNomeAtual_naoLancaExcecao() {
+        var request = new PersonRequest("Eu");
+        when(personRepository.findById(person.getId())).thenReturn(Optional.of(person));
+        when(personRepository.existsByNameIgnoreCaseAndIdNot("Eu", person.getId())).thenReturn(false);
+        when(personRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        PersonResponse response = service.update(person.getId(), request);
+
+        assertThat(response.name()).isEqualTo("Eu");
+    }
+
+    @Test
+    void update_nomeDuplicadoDeOutraPessoa_lancaBusinessException400() {
+        var request = new PersonRequest("Esposa");
+        when(personRepository.findById(person.getId())).thenReturn(Optional.of(person));
+        when(personRepository.existsByNameIgnoreCaseAndIdNot("Esposa", person.getId())).thenReturn(true);
+
+        assertThatThrownBy(() -> service.update(person.getId(), request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test

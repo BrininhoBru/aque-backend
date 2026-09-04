@@ -23,6 +23,8 @@ public class PersonService {
     }
 
     public PersonResponse create(PersonRequest request) {
+        validateNameNotDuplicated(request.name());
+
         Person person = new Person();
         person.setName(request.name());
         return PersonResponse.from(personRepository.save(person));
@@ -30,6 +32,14 @@ public class PersonService {
 
     public PersonResponse update(UUID id, PersonRequest request) {
         Person person = findById(id);
+
+        if (personRepository.existsByNameIgnoreCaseAndIdNot(request.name(), id)) {
+            throw new BusinessException(
+                    "Já existe uma pessoa com esse nome",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
         person.setName(request.name());
         return PersonResponse.from(personRepository.save(person));
     }
@@ -45,6 +55,15 @@ public class PersonService {
         }
 
         personRepository.delete(person);
+    }
+
+    private void validateNameNotDuplicated(String name) {
+        if (personRepository.existsByNameIgnoreCase(name)) {
+            throw new BusinessException(
+                    "Já existe uma pessoa com esse nome",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     private Person findById(UUID id) {

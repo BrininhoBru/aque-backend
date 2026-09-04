@@ -37,4 +37,7 @@ public class RecurringTransaction {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(name = "due_day")
+    private Integer dueDay;
 }

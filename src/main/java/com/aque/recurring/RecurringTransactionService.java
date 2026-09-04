@@ -2,6 +2,7 @@ package com.aque.recurring;
 
 import com.aque.category.Category;
 import com.aque.category.CategoryRepository;
+import com.aque.category.CategoryType;
 import com.aque.exception.BusinessException;
 import com.aque.recurring.dto.request.RecurringTransactionRequest;
 import com.aque.recurring.dto.response.RecurringTransactionResponse;
@@ -32,12 +33,14 @@ public class RecurringTransactionService {
 
     public RecurringTransactionResponse create(RecurringTransactionRequest request) {
         Category category = findCategory(request.categoryId());
+        validateTypeMatchesCategory(request.type(), category);
 
         RecurringTransaction recurring = new RecurringTransaction();
         recurring.setDescription(request.description());
         recurring.setCategory(category);
         recurring.setType(request.type());
         recurring.setDefaultAmount(request.defaultAmount());
+        recurring.setDueDay(request.dueDay());
         recurring.setActive(true);
 
         return RecurringTransactionResponse.from(recurringRepository.save(recurring));
@@ -46,11 +49,13 @@ public class RecurringTransactionService {
     public RecurringTransactionResponse update(UUID id, RecurringTransactionRequest request) {
         RecurringTransaction recurring = findById(id);
         Category category = findCategory(request.categoryId());
+        validateTypeMatchesCategory(request.type(), category);
 
         recurring.setDescription(request.description());
         recurring.setCategory(category);
         recurring.setType(request.type());
         recurring.setDefaultAmount(request.defaultAmount());
+        recurring.setDueDay(request.dueDay());
 
         return RecurringTransactionResponse.from(recurringRepository.save(recurring));
     }
@@ -71,6 +76,15 @@ public class RecurringTransactionService {
 
     public int generate(int year, int month) {
         return recurringTransactionJob.generate(year, month);
+    }
+
+    private void validateTypeMatchesCategory(CategoryType type, Category category) {
+        if (type != category.getType()) {
+            throw new BusinessException(
+                    "Tipo do recorrente não corresponde ao tipo da categoria",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     private Category findCategory(UUID categoryId) {

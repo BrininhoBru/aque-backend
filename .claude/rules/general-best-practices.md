@@ -11,7 +11,9 @@ Aplica-se a todo o repositório, independente de linguagem ou stack.
 ## Git e commits
 - Conventional Commits: `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `test:`
 - Um commit = uma mudança lógica; evite commits "ajustes diversos"
-- Branch a partir de `main`/`develop` atualizada; nomeie como `feat/nome-da-feature` ou `fix/descricao-do-bug`
+- Branch a partir de `dev` atualizada (não `main` — `main` é só release); nomeie como `feat/nome-da-feature` ou `fix/descricao-do-bug`
+- PR sempre mira `dev`, nunca `main` diretamente — `main` só avança via PR de release de `dev` pra `main`
+- Quando um branch novo depende de verdade de outro ainda não mergeado, abra o PR em stack (`--base <branch-dependente>` em vez de `--base dev`) em vez de esperar o merge
 - Nunca commitar arquivos gerados (build, node_modules, target) — confira `.gitignore` antes de criar algo novo
 
 ## Tratamento de erros

@@ -27,6 +27,9 @@ class RecurringTransactionJobUnitTest {
     @Mock
     private TransactionRepository transactionRepository;
 
+    @Mock
+    private RecurringGenerationRepository recurringGenerationRepository;
+
     @InjectMocks
     private RecurringTransactionJob job;
 
@@ -36,7 +39,7 @@ class RecurringTransactionJobUnitTest {
         RecurringTransaction ok = recurring("Aluguel");
 
         when(recurringRepository.findByActive(true)).thenReturn(List.of(quebrado, ok));
-        when(transactionRepository.existsByRecurringIdAndReferenceMonthAndReferenceYear(any(), eq(3), eq(2026)))
+        when(recurringGenerationRepository.existsByRecurringIdAndReferenceMonthAndReferenceYear(any(), eq(3), eq(2026)))
                 .thenReturn(false);
         when(transactionRepository.save(any()))
                 .thenThrow(new RuntimeException("falha simulada"))
@@ -53,7 +56,7 @@ class RecurringTransactionJobUnitTest {
         RecurringTransaction recurring = recurring("Aluguel");
 
         when(recurringRepository.findByActive(true)).thenReturn(List.of(recurring));
-        when(transactionRepository.existsByRecurringIdAndReferenceMonthAndReferenceYear(
+        when(recurringGenerationRepository.existsByRecurringIdAndReferenceMonthAndReferenceYear(
                 recurring.getId(), 3, 2026)).thenReturn(true);
 
         int count = job.generate(2026, 3);
