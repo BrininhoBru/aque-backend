@@ -1,6 +1,7 @@
 package com.aque.person;
 
 import com.aque.BaseIntegrationTest;
+import com.aque.asset.AssetRepository;
 import com.aque.person.dto.request.PersonRequest;
 import com.aque.split.SplitRule;
 import com.aque.split.SplitRuleItem;
@@ -30,11 +31,15 @@ class PersonControllerTest extends BaseIntegrationTest {
     @Autowired
     private SplitRuleRepository splitRuleRepository;
 
+    @Autowired
+    private AssetRepository assetRepository;
+
     private Person person;
 
     @BeforeEach
     void setupPersons() {
         splitRuleRepository.deleteAll();
+        assetRepository.deleteAll();
         personRepository.deleteAll();
 
         person = new Person();
