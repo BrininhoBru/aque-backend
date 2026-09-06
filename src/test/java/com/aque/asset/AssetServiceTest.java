@@ -384,6 +384,25 @@ class AssetServiceTest {
     }
 
     @Test
+    void importFromXlsx_linhaSemValorMisturadaComLinhaValida_importaAValidaEReportaAInvalida() throws IOException {
+        MultipartFile file = workbook(Map.of(
+                "Renda Fixa", new Object[][]{
+                        {"Produto", "Valor Atualizado MTM", "Valor Atualizado CURVA", "Valor Atualizado FECHAMENTO"},
+                        {"CDB - ITAU UNIBANCO S.A.", "-", 212.17, "-"},
+                        {"CDB - SEM VALOR", "-", "-", "-"}
+                }
+        ));
+        when(assetRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AssetImportResponse response = service.importFromXlsx(file);
+
+        assertThat(response.created()).hasSize(1);
+        assertThat(response.created().getFirst().name()).isEqualTo("CDB - ITAU UNIBANCO S.A.");
+        assertThat(response.errors()).hasSize(1);
+        assertThat(response.errors().getFirst().message()).isEqualTo("Valor atualizado indisponível");
+    }
+
+    @Test
     void importFromXlsx_abaTesouroDireto_usaColunaValorAtualizadoSimples() throws IOException {
         // Regressão: Tesouro Direto também vira AssetType.RENDA_FIXA, mas sua planilha usa
         // a coluna "Valor Atualizado" simples (como Acoes/Fundo), não as variantes
