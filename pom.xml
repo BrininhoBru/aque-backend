@@ -72,6 +72,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Import de planilhas XLSX (extrato de posição da B3) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.5.1</version>
+        </dependency>
+
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

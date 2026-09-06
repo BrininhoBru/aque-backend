@@ -1,6 +1,7 @@
 package com.aque.person;
 
 import com.aque.BaseIntegrationTest;
+import com.aque.asset.AssetRepository;
 import com.aque.person.dto.request.PersonRequest;
 import com.aque.split.SplitRule;
 import com.aque.split.SplitRuleItem;
@@ -30,11 +31,15 @@ class PersonControllerTest extends BaseIntegrationTest {
     @Autowired
     private SplitRuleRepository splitRuleRepository;
 
+    @Autowired
+    private AssetRepository assetRepository;
+
     private Person person;
 
     @BeforeEach
     void setupPersons() {
         splitRuleRepository.deleteAll();
+        assetRepository.deleteAll();
         personRepository.deleteAll();
 
         person = new Person();
@@ -102,6 +107,21 @@ class PersonControllerTest extends BaseIntegrationTest {
         item.setPercentage(BigDecimal.valueOf(100));
         rule.getItems().add(item);
         splitRuleRepository.save(rule);
+
+        mockMvc.perform(delete("/persons/" + person.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void excluirPessoaVinculadaAAtivo_deveRetornar400() throws Exception {
+        com.aque.asset.Asset asset = new com.aque.asset.Asset();
+        asset.setName("VALE3");
+        asset.setType(com.aque.asset.AssetType.ACAO);
+        asset.setCurrentValue(BigDecimal.valueOf(314.48));
+        asset.setPerson(person);
+        assetRepository.save(asset);
 
         mockMvc.perform(delete("/persons/" + person.getId())
                         .header("Authorization", token))

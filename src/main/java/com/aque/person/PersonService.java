@@ -54,6 +54,13 @@ public class PersonService {
             );
         }
 
+        if (personRepository.isLinkedToAsset(id)) {
+            throw new BusinessException(
+                    "Pessoa vinculada a um ativo e não pode ser excluída",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
         personRepository.delete(person);
     }
 

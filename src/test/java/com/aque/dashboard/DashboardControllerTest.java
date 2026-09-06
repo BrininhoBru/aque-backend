@@ -1,6 +1,7 @@
 package com.aque.dashboard;
 
 import com.aque.BaseIntegrationTest;
+import com.aque.asset.AssetRepository;
 import com.aque.category.Category;
 import com.aque.category.CategoryRepository;
 import com.aque.category.CategoryType;
@@ -46,10 +47,14 @@ class DashboardControllerTest extends BaseIntegrationTest {
     @Autowired
     private PersonRepository personRepository;
 
+    @Autowired
+    private AssetRepository assetRepository;
+
     @BeforeEach
     void setup() {
         transactionRepository.deleteAll();
         splitRuleRepository.deleteAll();
+        assetRepository.deleteAll();
         personRepository.deleteAll();
         categoryRepository.deleteAll();
     }
