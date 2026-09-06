@@ -1,7 +1,7 @@
 # Net worth module: manual assets and investments tracking
 
 - **Issue:** #33 — https://github.com/BrininhoBru/aque-backend/issues/33
-- **Status:** Draft
+- **Status:** Implemented
 - **Repo:** BrininhoBru/aque-backend
 
 ## Problema
@@ -45,19 +45,19 @@ Novo módulo `com.aque.asset`, espelhando a estrutura de `com.aque.category` (en
 
 ## Critério de aceite
 
-- [ ] `POST /assets` cria um ativo válido e retorna 201 com `AssetResponse`
-- [ ] `POST /assets` com `currentValue` negativo retorna 400
-- [ ] `POST /assets` com `type` fora do enum retorna 400
-- [ ] `GET /assets` retorna todos os ativos; `GET /assets?personId=X` filtra só os daquela pessoa
-- [ ] `PUT /assets/{id}` atualiza nome/tipo/valor de um ativo existente; retorna 404 se o id não existe
-- [ ] `DELETE /assets/{id}` remove o ativo; retorna 404 se o id não existe
-- [ ] `GET /assets/net-worth` retorna a soma de `currentValue` de todos os ativos cadastrados (0 se não houver nenhum)
-- [ ] `POST /assets/import` com o `.xlsx` de Posição da B3 cria um ativo por linha válida em cada uma das 4 abas, com o `type` correto por aba
-- [ ] `POST /assets/import` com uma linha da aba `Renda Fixa` sem MTM/FECHAMENTO usa o valor de CURVA
-- [ ] `POST /assets/import` com uma linha sem nenhum valor utilizável, ou uma aba com nome inesperado, reporta o problema em `errors` e ainda assim importa as linhas/abas válidas restantes
-- [ ] `POST /assets/import` com uma linha de `Produto` vazio reporta o erro com `informational: true`; os demais tipos de erro vêm com `informational: false`
-- [ ] Reimportar o mesmo arquivo depois de já ter ativos cadastrados **atualiza** `currentValue` dos existentes (casados por nome+tipo, case-insensitive) em vez de criar duplicata — resposta reflete isso em `updated`, não em `created`
-- [ ] Um nome novo (sem correspondência existente) entra em `created`; um nome já cadastrado entra em `updated`
+- [x] `POST /assets` cria um ativo válido e retorna 201 com `AssetResponse`
+- [x] `POST /assets` com `currentValue` negativo retorna 400
+- [x] `POST /assets` com `type` fora do enum retorna 400
+- [x] `GET /assets` retorna todos os ativos; `GET /assets?personId=X` filtra só os daquela pessoa
+- [x] `PUT /assets/{id}` atualiza nome/tipo/valor de um ativo existente; retorna 404 se o id não existe
+- [x] `DELETE /assets/{id}` remove o ativo; retorna 404 se o id não existe
+- [x] `GET /assets/net-worth` retorna a soma de `currentValue` de todos os ativos cadastrados (0 se não houver nenhum)
+- [x] `POST /assets/import` com o `.xlsx` de Posição da B3 cria um ativo por linha válida em cada uma das 4 abas, com o `type` correto por aba
+- [x] `POST /assets/import` com uma linha da aba `Renda Fixa` sem MTM/FECHAMENTO usa o valor de CURVA
+- [x] `POST /assets/import` com uma linha sem nenhum valor utilizável, ou uma aba com nome inesperado, reporta o problema em `errors` e ainda assim importa as linhas/abas válidas restantes
+- [x] `POST /assets/import` com uma linha de `Produto` vazio reporta o erro com `informational: true`; os demais tipos de erro vêm com `informational: false`
+- [x] Reimportar o mesmo arquivo depois de já ter ativos cadastrados **atualiza** `currentValue` dos existentes (casados por nome+tipo, case-insensitive) em vez de criar duplicata — resposta reflete isso em `updated`, não em `created`
+- [x] Um nome novo (sem correspondência existente) entra em `created`; um nome já cadastrado entra em `updated`
 
 ## Questões em aberto
 
