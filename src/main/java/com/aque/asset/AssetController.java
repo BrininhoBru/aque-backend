@@ -19,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -115,12 +114,14 @@ public class AssetController {
             summary = "Importar posição da B3",
             description = "Importa ativos a partir do arquivo .xlsx de 'Posição' exportado pela Área do Investidor da B3",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Import processado (ver `imported`/`errors`)")
+                    @ApiResponse(responseCode = "200", description = "Import processado (ver `created`/`updated`/`errors`)"),
+                    @ApiResponse(responseCode = "400", description = "Arquivo vazio ou não é um .xlsx válido",
+                            content = @Content)
             }
     )
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AssetImportResponse> importFromXlsx(
-            @RequestParam("file") MultipartFile file) throws IOException {
+            @Parameter(description = "Arquivo .xlsx de 'Posição' da B3") @RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(assetService.importFromXlsx(file));
     }
 }

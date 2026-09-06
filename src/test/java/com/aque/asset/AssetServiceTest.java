@@ -201,6 +201,24 @@ class AssetServiceTest {
     }
 
     @Test
+    void importFromXlsx_abaFundoDeInvestimento_criaAtivoComTipoFundo() throws IOException {
+        MultipartFile file = workbook(Map.of(
+                "Fundo de Investimento", new Object[][]{
+                        {"Produto", "Valor Atualizado"},
+                        {"BTCI11 - FII BTG PACTUAL CRÉDITO IMOBILIÁRIO RESP LIM", 204.60}
+                }
+        ));
+        when(assetRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AssetImportResponse response = service.importFromXlsx(file);
+
+        assertThat(response.created()).hasSize(1);
+        assertThat(response.created().getFirst().type()).isEqualTo(AssetType.FUNDO);
+        assertThat(response.created().getFirst().currentValue()).isEqualByComparingTo("204.60");
+        assertThat(response.errors()).isEmpty();
+    }
+
+    @Test
     void importFromXlsx_nomeETipoJaExistem_atualizaEmVezDeCriar() throws IOException {
         Asset existing = new Asset();
         existing.setId(UUID.randomUUID());
@@ -406,6 +424,47 @@ class AssetServiceTest {
         assertThat(response.errors()).hasSize(1);
         assertThat(response.errors().getFirst().sheet()).isEqualTo("Outra Aba");
         assertThat(response.errors().getFirst().informational()).isFalse();
+    }
+
+    @Test
+    void importFromXlsx_arquivoVazio_lancaBusinessException400() {
+        MultipartFile file = new MockMultipartFile("file", "posicao.xlsx", null, new byte[0]);
+
+        assertThatThrownBy(() -> service.importFromXlsx(file))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
+
+        verifyNoMoreInteractions(assetRepository);
+    }
+
+    @Test
+    void importFromXlsx_arquivoNaoEhXlsx_lancaBusinessException400() {
+        // Ex.: usuário envia sem querer a versão CSV/PDF de "Posição" da B3
+        MultipartFile file = new MockMultipartFile("file", "posicao.csv", null, "não é um xlsx".getBytes());
+
+        assertThatThrownBy(() -> service.importFromXlsx(file))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
+
+        verifyNoMoreInteractions(assetRepository);
+    }
+
+    @Test
+    void importFromXlsx_produtoComCelulaNumerica_naoLancaExcecao() throws IOException {
+        // Regressão: cellAsString usava getStringCellValue(), que lança IllegalStateException
+        // em qualquer célula que não seja do tipo STRING — uma célula numérica na coluna
+        // Produto derrubava o import inteiro em vez de virar um erro reportado.
+        MultipartFile file = workbook(Map.of(
+                "Acoes", new Object[][]{
+                        {"Produto", "Valor Atualizado"},
+                        {123.0, 314.48}
+                }
+        ));
+        when(assetRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AssetImportResponse response = service.importFromXlsx(file);
+
+        assertThat(response.created()).hasSize(1);
     }
 
     private MultipartFile workbook(Map<String, Object[][]> sheets) throws IOException {

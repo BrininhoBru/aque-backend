@@ -51,6 +51,13 @@ class AssetControllerTest extends BaseIntegrationTest {
         vale3.setCurrentValue(new BigDecimal("314.48"));
         vale3.setPerson(bruno);
         assetRepository.save(vale3);
+
+        // sem pessoa — prova que o filtro por personId realmente exclui, não só "não quebra"
+        Asset semPessoa = new Asset();
+        semPessoa.setName("BTCI11");
+        semPessoa.setType(AssetType.FUNDO);
+        semPessoa.setCurrentValue(new BigDecimal("204.60"));
+        assetRepository.save(semPessoa);
     }
 
     @Test
@@ -58,7 +65,7 @@ class AssetControllerTest extends BaseIntegrationTest {
         mockMvc.perform(get("/assets")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.length()").value(2));
     }
 
     @Test
@@ -66,7 +73,8 @@ class AssetControllerTest extends BaseIntegrationTest {
         mockMvc.perform(get("/assets?personId=" + bruno.getId())
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("VALE3"));
     }
 
     @Test
@@ -108,6 +116,20 @@ class AssetControllerTest extends BaseIntegrationTest {
     }
 
     @Test
+    void criarAtivo_comTipoForaDoEnum_deveRetornar400() throws Exception {
+        // Diferente de "sem tipo" (violação de @NotNull) — aqui o valor existe mas não bate
+        // com nenhuma constante de AssetType, falhando na desserialização do Jackson
+        // (HttpMessageNotReadableException), não na validação Bean Validation.
+        String body = "{\"name\":\"BTCI11\",\"type\":\"BITCOIN\",\"currentValue\":204.60,\"personId\":null}";
+
+        mockMvc.perform(post("/assets")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void editarAtivo_deveRetornar200() throws Exception {
         String body = objectMapper.writeValueAsString(
                 new AssetRequest("VALE3 Atualizado", AssetType.ACAO, new BigDecimal("400.00"), null));
@@ -118,6 +140,31 @@ class AssetControllerTest extends BaseIntegrationTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("VALE3 Atualizado"));
+    }
+
+    @Test
+    void editarAtivo_mudandoTipo_deveRefletirNovoTipo() throws Exception {
+        String body = objectMapper.writeValueAsString(
+                new AssetRequest("VALE3", AssetType.OUTRO, new BigDecimal("314.48"), null));
+
+        mockMvc.perform(put("/assets/" + vale3.getId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("OUTRO"));
+    }
+
+    @Test
+    void editarAtivoInexistente_deveRetornar404() throws Exception {
+        String body = objectMapper.writeValueAsString(
+                new AssetRequest("X", AssetType.OUTRO, BigDecimal.ZERO, null));
+
+        mockMvc.perform(put("/assets/00000000-0000-0000-0000-000000000000")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -139,7 +186,7 @@ class AssetControllerTest extends BaseIntegrationTest {
         mockMvc.perform(get("/assets/net-worth")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalValue").value(314.48));
+                .andExpect(jsonPath("$.totalValue").value(519.08));
     }
 
     @Test
@@ -172,7 +219,25 @@ class AssetControllerTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.updated[0].currentValue").value(400.00));
 
         mockMvc.perform(get("/assets").header("Authorization", token))
-                .andExpect(jsonPath("$.length()").value(2)); // vale3 do setup + VALE3 - VALE S.A. importado (nomes diferentes)
+                .andExpect(jsonPath("$.length()").value(3)); // vale3 + semPessoa do setup + VALE3 - VALE S.A. importado (nomes diferentes)
+    }
+
+    @Test
+    void importarPosicaoB3_comNomeEmCaixaDiferente_atualizaAtivoExistente() throws Exception {
+        // fixture tem "VALE3" (maiúsculas) — importa em minúsculas pra provar que o
+        // casamento por nome+tipo é case-insensitive de verdade, não só por delegação
+        MockMultipartFile file = posicaoAcoesFile("vale3", 500.00);
+
+        mockMvc.perform(multipart("/assets/import")
+                        .file(file)
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.created.length()").value(0))
+                .andExpect(jsonPath("$.updated.length()").value(1))
+                .andExpect(jsonPath("$.updated[0].currentValue").value(500.00));
+
+        mockMvc.perform(get("/assets").header("Authorization", token))
+                .andExpect(jsonPath("$.length()").value(2)); // sem duplicar
     }
 
     private MockMultipartFile posicaoAcoesFile(String produto, double valorAtualizado) throws Exception {

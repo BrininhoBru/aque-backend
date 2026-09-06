@@ -11,6 +11,7 @@ import com.aque.person.PersonRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -35,6 +36,7 @@ public class AssetService {
     private static final String COLUMN_VALOR_ATUALIZADO = "Valor Atualizado";
     private static final List<String> RENDA_FIXA_VALUE_COLUMNS = List.of(
             "Valor Atualizado CURVA", "Valor Atualizado FECHAMENTO", "Valor Atualizado MTM");
+    private static final DataFormatter CELL_FORMATTER = new DataFormatter();
 
     private final AssetRepository assetRepository;
     private final PersonRepository personRepository;
@@ -77,7 +79,11 @@ public class AssetService {
         return new NetWorthResponse(assetRepository.sumCurrentValue());
     }
 
-    public AssetImportResponse importFromXlsx(MultipartFile file) throws IOException {
+    public AssetImportResponse importFromXlsx(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new BusinessException("Arquivo vazio", HttpStatus.BAD_REQUEST);
+        }
+
         List<AssetResponse> created = new ArrayList<>();
         List<AssetResponse> updated = new ArrayList<>();
         List<AssetImportError> errors = new ArrayList<>();
@@ -92,6 +98,8 @@ public class AssetService {
 
                 importSheet(sheet, type, isRendaFixaVariantSheet(sheet.getSheetName()), created, updated, errors);
             }
+        } catch (IOException | RuntimeException e) {
+            throw new BusinessException("Arquivo não é um .xlsx de Posição da B3 válido", HttpStatus.BAD_REQUEST);
         }
 
         return new AssetImportResponse(created, updated, errors);
@@ -185,7 +193,7 @@ public class AssetService {
     }
 
     private String cellAsString(Cell cell) {
-        return cell == null ? null : cell.getStringCellValue();
+        return cell == null ? null : CELL_FORMATTER.formatCellValue(cell);
     }
 
     private BigDecimal cellAsNumeric(Cell cell) {

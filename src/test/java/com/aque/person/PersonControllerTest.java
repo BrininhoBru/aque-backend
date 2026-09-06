@@ -113,4 +113,19 @@ class PersonControllerTest extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
     }
+
+    @Test
+    void excluirPessoaVinculadaAAtivo_deveRetornar400() throws Exception {
+        com.aque.asset.Asset asset = new com.aque.asset.Asset();
+        asset.setName("VALE3");
+        asset.setType(com.aque.asset.AssetType.ACAO);
+        asset.setCurrentValue(BigDecimal.valueOf(314.48));
+        asset.setPerson(person);
+        assetRepository.save(asset);
+
+        mockMvc.perform(delete("/persons/" + person.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+    }
 }
