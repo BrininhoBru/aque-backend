@@ -14,6 +14,7 @@ public interface PersonRepository extends JpaRepository<Person, UUID> {
     @Query("SELECT COUNT(a) > 0 FROM Asset a WHERE a.person.id = :personId")
     boolean isLinkedToAsset(@Param("personId") UUID personId);
 
+
     boolean existsByNameIgnoreCase(String name);
 
     boolean existsByNameIgnoreCaseAndIdNot(String name, UUID id);
