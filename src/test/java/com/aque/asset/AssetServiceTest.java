@@ -295,7 +295,7 @@ class AssetServiceTest {
         assertThat(response.created().getFirst().name()).isEqualTo("VALE3 - VALE S.A.");
         assertThat(response.errors()).hasSize(1);
         assertThat(response.errors().getFirst().row()).isEqualTo(3);
-        assertThat(response.errors().getFirst().informational()).isTrue();
+        assertThat(response.errors().getFirst().isInformational()).isTrue();
     }
 
     @Test
@@ -311,7 +311,7 @@ class AssetServiceTest {
 
         assertThat(response.created()).isEmpty();
         assertThat(response.errors()).hasSize(1);
-        assertThat(response.errors().getFirst().informational()).isTrue();
+        assertThat(response.errors().getFirst().isInformational()).isTrue();
         verifyNoMoreInteractions(assetRepository);
     }
 
@@ -343,7 +343,7 @@ class AssetServiceTest {
 
         assertThat(response.created()).isEmpty();
         assertThat(response.errors()).hasSize(1);
-        assertThat(response.errors().getFirst().informational()).isFalse();
+        assertThat(response.errors().getFirst().isInformational()).isFalse();
         verifyNoMoreInteractions(assetRepository);
     }
 
@@ -379,7 +379,7 @@ class AssetServiceTest {
         assertThat(response.created()).isEmpty();
         assertThat(response.errors()).hasSize(1);
         assertThat(response.errors().getFirst().sheet()).isEqualTo("Renda Fixa");
-        assertThat(response.errors().getFirst().informational()).isFalse();
+        assertThat(response.errors().getFirst().isInformational()).isFalse();
         verifyNoMoreInteractions(assetRepository);
     }
 
@@ -442,7 +442,7 @@ class AssetServiceTest {
         assertThat(response.created()).hasSize(1);
         assertThat(response.errors()).hasSize(1);
         assertThat(response.errors().getFirst().sheet()).isEqualTo("Outra Aba");
-        assertThat(response.errors().getFirst().informational()).isFalse();
+        assertThat(response.errors().getFirst().isInformational()).isFalse();
     }
 
     @Test

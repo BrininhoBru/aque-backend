@@ -15,7 +15,7 @@ O backend hoje só modela receitas/despesas via `Transaction` — não existe co
 - Endpoint de patrimônio total: soma de `currentValue` de todos os ativos.
 - Endpoint de import em lote a partir do arquivo **"Posição" exportado pela Área do Investidor da B3** (`.xlsx`), que o usuário já consegue baixar hoje sem custo — formato real confirmado a partir de um export de exemplo.
 - Reimportar o mesmo arquivo **atualiza automaticamente** os ativos já cadastrados (casados por nome + tipo) em vez de criar duplicata — cobre o uso real de reimportar periodicamente pra atualizar valores.
-- Cada erro de import carrega um indicador de severidade (`informational`) pra diferenciar rodapé/subtotal esperado do export (não é um problema de verdade) de um erro genuíno.
+- Cada erro de import carrega um indicador de severidade (`isInformational`) pra diferenciar rodapé/subtotal esperado do export (não é um problema de verdade) de um erro genuíno.
 
 **Fora:**
 - Sincronização automática com B3/corretoras (agregador Open Finance pago).
@@ -41,7 +41,7 @@ Novo módulo `com.aque.asset`, espelhando a estrutura de `com.aque.category` (en
   - Colunas do export não usadas aqui (instituição, quantidade, código ISIN, etc.) são lidas só para localizar nome/valor e não são persistidas — sem histórico de cotação/quantidade por ora
   - **Atualização automática**: para cada linha válida, `AssetRepository.findByNameIgnoreCaseAndType(name, type)` (retorna `List<Asset>`, não `Optional` — não pode quebrar se já existir mais de um registro com mesmo nome+tipo, cenário real já visto em produção local). Se encontrar ao menos um, atualiza o `currentValue` do primeiro (não mexe em `person` — import nunca teve esse conceito); se não encontrar, cria um novo `Asset`.
   - `AssetImportResponse` reflete isso: `{ created: List<AssetResponse>, updated: List<AssetResponse>, errors: List<AssetImportError> }` (`imported` único vira dois campos separados).
-  - `AssetImportError` ganha o campo `informational: boolean` — `true` só para a linha de rodapé/subtotal (`Produto` vazio), `false` para os demais casos (valor indisponível, valor negativo, aba desconhecida, coluna `Produto` ausente) — permite a tela do `aque-web` diferenciar "isso é esperado" de "isso é um problema".
+  - `AssetImportError` ganha o campo `isInformational: boolean` — `true` só para a linha de rodapé/subtotal (`Produto` vazio), `false` para os demais casos (valor indisponível, valor negativo, aba desconhecida, coluna `Produto` ausente) — permite a tela do `aque-web` diferenciar "isso é esperado" de "isso é um problema".
 
 ## Critério de aceite
 
@@ -55,7 +55,7 @@ Novo módulo `com.aque.asset`, espelhando a estrutura de `com.aque.category` (en
 - [x] `POST /assets/import` com o `.xlsx` de Posição da B3 cria um ativo por linha válida em cada uma das 4 abas, com o `type` correto por aba
 - [x] `POST /assets/import` com uma linha da aba `Renda Fixa` sem MTM/FECHAMENTO usa o valor de CURVA
 - [x] `POST /assets/import` com uma linha sem nenhum valor utilizável, ou uma aba com nome inesperado, reporta o problema em `errors` e ainda assim importa as linhas/abas válidas restantes
-- [x] `POST /assets/import` com uma linha de `Produto` vazio reporta o erro com `informational: true`; os demais tipos de erro vêm com `informational: false`
+- [x] `POST /assets/import` com uma linha de `Produto` vazio reporta o erro com `isInformational: true`; os demais tipos de erro vêm com `isInformational: false`
 - [x] Reimportar o mesmo arquivo depois de já ter ativos cadastrados **atualiza** `currentValue` dos existentes (casados por nome+tipo, case-insensitive) em vez de criar duplicata — resposta reflete isso em `updated`, não em `created`
 - [x] Um nome novo (sem correspondência existente) entra em `created`; um nome já cadastrado entra em `updated`
 
