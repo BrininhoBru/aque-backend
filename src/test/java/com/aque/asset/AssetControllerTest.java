@@ -240,16 +240,101 @@ class AssetControllerTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(2)); // sem duplicar
     }
 
+    @Test
+    void importarPosicaoB3_duasAplicacoesNoMesmoPapel_patrimonioTotalBateComOArquivo() throws Exception {
+        // O bug da #37 ponta a ponta, com Postgres de verdade: duas aplicações no mesmo
+        // papel distintas só pelo Código colapsavam num ativo só, e o patrimônio total
+        // ficava menor que o do extrato sem nada denunciar
+        MockMultipartFile file = posicaoRendaFixaFile();
+
+        mockMvc.perform(multipart("/assets/import")
+                        .file(file)
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.created.length()").value(2))
+                .andExpect(jsonPath("$.totalRead").value(3500.00))
+                .andExpect(jsonPath("$.totalPersisted").value(3500.00));
+
+        // 3500 do arquivo + 314.48 + 204.60 do fixture
+        mockMvc.perform(get("/assets/net-worth").header("Authorization", token))
+                .andExpect(jsonPath("$.totalValue").value(4019.08));
+    }
+
+    @Test
+    void importarPosicaoB3_mesmoArquivoComCodigoDuasVezes_naoDuplicaEMantemOPatrimonio() throws Exception {
+        mockMvc.perform(multipart("/assets/import").file(posicaoRendaFixaFile()).header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.created.length()").value(2));
+
+        mockMvc.perform(multipart("/assets/import")
+                        .file(posicaoRendaFixaFile())
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.created.length()").value(0))
+                .andExpect(jsonPath("$.updated.length()").value(2))
+                .andExpect(jsonPath("$.missing.length()").value(0));
+
+        mockMvc.perform(get("/assets").header("Authorization", token))
+                .andExpect(jsonPath("$.length()").value(4)); // 2 do fixture + 2 importados
+        mockMvc.perform(get("/assets/net-worth").header("Authorization", token))
+                .andExpect(jsonPath("$.totalValue").value(4019.08));
+    }
+
+    @Test
+    void importarPosicaoB3_ativoDeImportAnteriorAusente_entraEmMissingSemSerApagado() throws Exception {
+        mockMvc.perform(multipart("/assets/import").file(posicaoRendaFixaFile()).header("Authorization", token))
+                .andExpect(status().isOk());
+
+        // segundo extrato sem a renda fixa: o ativo não pode sumir do banco sozinho
+        mockMvc.perform(multipart("/assets/import")
+                        .file(posicaoAcoesFile("XPTO3 - XPTO S.A.", 290.20))
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.missing.length()").value(2));
+
+        mockMvc.perform(get("/assets").header("Authorization", token))
+                .andExpect(jsonPath("$.length()").value(5));
+    }
+
+    private MockMultipartFile posicaoRendaFixaFile() throws Exception {
+        byte[] xlsx;
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Renda Fixa");
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("Produto");
+            header.createCell(1).setCellValue("Código");
+            header.createCell(2).setCellValue("Valor Atualizado CURVA");
+
+            Row primeira = sheet.createRow(1);
+            primeira.createCell(0).setCellValue("CDB - BANCO XPTO S.A.");
+            primeira.createCell(1).setCellValue("CDB111AA11A");
+            primeira.createCell(2).setCellValue(1000.00);
+
+            Row segunda = sheet.createRow(2);
+            segunda.createCell(0).setCellValue("CDB - BANCO XPTO S.A.");
+            segunda.createCell(1).setCellValue("CDB222BB22B");
+            segunda.createCell(2).setCellValue(2500.00);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            wb.write(out);
+            xlsx = out.toByteArray();
+        }
+        return new MockMultipartFile("file", "posicao.xlsx", null, xlsx);
+    }
+
     private MockMultipartFile posicaoAcoesFile(String produto, double valorAtualizado) throws Exception {
         byte[] xlsx;
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("Acoes");
             Row header = sheet.createRow(0);
             header.createCell(0).setCellValue("Produto");
-            header.createCell(1).setCellValue("Valor Atualizado");
+            header.createCell(1).setCellValue("Código de Negociação");
+            header.createCell(2).setCellValue("Valor Atualizado");
             Row data = sheet.createRow(1);
             data.createCell(0).setCellValue(produto);
-            data.createCell(1).setCellValue(valorAtualizado);
+            // o ticker é o primeiro token do Produto no export da B3 ("VALE3 - VALE S.A.")
+            data.createCell(1).setCellValue(produto.split(" ")[0]);
+            data.createCell(2).setCellValue(valorAtualizado);
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             wb.write(out);

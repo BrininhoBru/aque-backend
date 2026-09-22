@@ -4,6 +4,7 @@ import com.aque.category.Category;
 import com.aque.category.CategoryRepository;
 import com.aque.category.CategoryType;
 import com.aque.exception.BusinessException;
+import com.aque.recurring.RecurringGenerationRepository;
 import com.aque.transaction.dto.request.PaymentUpdateRequest;
 import com.aque.transaction.dto.request.TransactionRequest;
 import com.aque.transaction.dto.response.TransactionResponse;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
+    private final RecurringGenerationRepository recurringGenerationRepository;
 
     public List<TransactionResponse> findAll(Integer month, Integer year, UUID categoryId, CategoryType type, TransactionStatus status) {
         Specification<Transaction> spec = (root, query, cb) -> {
@@ -88,8 +91,20 @@ public class TransactionService {
         return TransactionResponse.from(transactionRepository.save(transaction));
     }
 
+    @Transactional
     public void delete(UUID id) {
-        transactionRepository.delete(findById(id));
+        Transaction transaction = findById(id);
+        transactionRepository.delete(transaction);
+
+        // a linha em recurring_generations é o que marca "esse mês já foi gerado"; sem
+        // apagá-la junto, o mês fica marcado como gerado sem ter instância nenhuma e o
+        // job ignora esse recorrente pra sempre
+        if (transaction.getRecurringId() != null) {
+            recurringGenerationRepository.deleteByRecurringIdAndReferenceMonthAndReferenceYear(
+                    transaction.getRecurringId(),
+                    transaction.getReferenceMonth(),
+                    transaction.getReferenceYear());
+        }
     }
 
     private void applyPayment(Transaction transaction, java.math.BigDecimal amountPaid) {

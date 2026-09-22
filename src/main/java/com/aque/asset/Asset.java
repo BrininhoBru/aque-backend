@@ -30,6 +30,10 @@ public class Asset {
     @Column(name = "current_value", nullable = false)
     private BigDecimal currentValue;
 
+    // identificador da posição no extrato da B3 (ver V9); nulo em ativo cadastrado à mão
+    @Column(name = "external_code")
+    private String externalCode;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id")
     private Person person;

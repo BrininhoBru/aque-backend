@@ -4,6 +4,7 @@ import com.aque.category.Category;
 import com.aque.category.CategoryRepository;
 import com.aque.category.CategoryType;
 import com.aque.exception.BusinessException;
+import com.aque.recurring.RecurringGenerationRepository;
 import com.aque.transaction.dto.request.PaymentUpdateRequest;
 import com.aque.transaction.dto.request.TransactionRequest;
 import com.aque.transaction.dto.response.TransactionResponse;
@@ -22,6 +23,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +35,9 @@ class TransactionServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private RecurringGenerationRepository recurringGenerationRepository;
 
     @InjectMocks
     private TransactionService service;
@@ -157,6 +163,42 @@ class TransactionServiceTest {
         assertThatThrownBy(() -> service.delete(id))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void delete_lancamentoDeRecorrente_limpaRegistroDeGeracao() {
+        UUID id = UUID.randomUUID();
+        UUID recurringId = UUID.randomUUID();
+        Transaction existing = new Transaction();
+        existing.setId(id);
+        existing.setCategory(category);
+        existing.setRecurringId(recurringId);
+        existing.setReferenceMonth(3);
+        existing.setReferenceYear(2026);
+
+        when(transactionRepository.findById(id)).thenReturn(Optional.of(existing));
+
+        service.delete(id);
+
+        verify(transactionRepository).delete(existing);
+        verify(recurringGenerationRepository)
+                .deleteByRecurringIdAndReferenceMonthAndReferenceYear(recurringId, 3, 2026);
+    }
+
+    @Test
+    void delete_lancamentoAvulso_naoMexeEmRecurringGenerations() {
+        UUID id = UUID.randomUUID();
+        Transaction existing = new Transaction();
+        existing.setId(id);
+        existing.setCategory(category);
+        existing.setReferenceMonth(3);
+        existing.setReferenceYear(2026);
+
+        when(transactionRepository.findById(id)).thenReturn(Optional.of(existing));
+
+        service.delete(id);
+
+        verifyNoInteractions(recurringGenerationRepository);
     }
 
     @Test

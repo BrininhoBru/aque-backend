@@ -12,6 +12,7 @@ public record AssetResponse(
         String name,
         AssetType type,
         BigDecimal currentValue,
+        String externalCode,
         PersonResponse person
 ) {
     public static AssetResponse from(Asset asset) {
@@ -20,6 +21,7 @@ public record AssetResponse(
                 asset.getName(),
                 asset.getType(),
                 asset.getCurrentValue(),
+                asset.getExternalCode(),
                 asset.getPerson() != null ? PersonResponse.from(asset.getPerson()) : null
         );
     }

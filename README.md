@@ -338,7 +338,9 @@ Desativa o template (`active: false`). Instâncias já geradas são mantidas.
 
 #### `POST /recurring/generate/{year}/{month}`
 
-Força a geração manual de instâncias para um mês/ano específico. Útil para backfill e testes. A operação é idempotente.
+Força a geração manual de instâncias para um mês/ano específico. Útil para backfill e testes. A operação é idempotente: chamar de novo para o mesmo mês não duplica nada.
+
+Excluir uma instância gerada (`DELETE /transactions/{id}`) libera aquele mês para nova geração — a chamada seguinte recria o lançamento. Vale também para o job automático: excluir a instância de um mês **futuro** faz o job do dia 1 recriá-la quando aquele mês chegar (ele usa a data corrente e só gera o mês vigente).
 
 **Response** `200 OK`
 ```json
