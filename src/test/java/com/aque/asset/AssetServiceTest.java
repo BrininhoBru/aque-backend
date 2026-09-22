@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -486,6 +487,55 @@ class AssetServiceTest {
         AssetImportResponse response = service.importFromXlsx(file);
 
         assertThat(response.created()).hasSize(1);
+    }
+
+    @Test
+    void importFromXlsx_falhaInesperadaNumaLinha_importaAsOutrasEReportaAQuebrada() throws IOException {
+        // Falha inesperada (não é linha inválida prevista): o banco recusa a gravação. Antes
+        // da #40 isso derrubava o import inteiro e ainda dizia que o arquivo era inválido,
+        // deixando as linhas anteriores já commitadas
+        MultipartFile file = workbook(Map.of(
+                "Acoes", new Object[][]{
+                        {"Produto", "Código de Negociação", "Valor Atualizado"},
+                        {"XPTO3 - XPTO S.A.", "XPTO3", 290.20},
+                        {"XPTO4 - XPTO PART S.A.", "XPTO4", 109.80}
+                }
+        ));
+        when(assetRepository.save(any()))
+                .thenAnswer(inv -> inv.getArgument(0))
+                .thenThrow(new DataIntegrityViolationException("valor muito longo para a coluna name"));
+
+        AssetImportResponse response = service.importFromXlsx(file);
+
+        assertThat(response.created()).hasSize(1);
+        assertThat(response.errors()).singleElement()
+                .satisfies(error -> {
+                    assertThat(error.sheet()).isEqualTo("Acoes");
+                    assertThat(error.isInformational()).isFalse();
+                });
+    }
+
+    @Test
+    void importFromXlsx_falhaInesperadaNumaLinha_naoEntraNaReconciliacao() throws IOException {
+        // a linha que não foi gravada também não pode contar como lida, senão a reconciliação
+        // acusaria uma divergência que não existe e mandaria o usuário caçar fantasma
+        MultipartFile file = workbook(Map.of(
+                "Acoes", new Object[][]{
+                        {"Produto", "Código de Negociação", "Valor Atualizado"},
+                        {"XPTO3 - XPTO S.A.", "XPTO3", 290.20},
+                        {"XPTO4 - XPTO PART S.A.", "XPTO4", 109.80}
+                }
+        ));
+        when(assetRepository.save(any()))
+                .thenAnswer(inv -> inv.getArgument(0))
+                .thenThrow(new DataIntegrityViolationException("falha simulada"));
+
+        AssetImportResponse response = service.importFromXlsx(file);
+
+        assertThat(response.totalRead()).isEqualByComparingTo("290.20");
+        assertThat(response.totalPersisted()).isEqualByComparingTo("290.20");
+        assertThat(response.sheets()).singleElement()
+                .satisfies(sheet -> assertThat(sheet.rows()).isEqualTo(1));
     }
 
     @Test
