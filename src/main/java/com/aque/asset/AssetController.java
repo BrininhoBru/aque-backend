@@ -112,9 +112,22 @@ public class AssetController {
 
     @Operation(
             summary = "Importar posição da B3",
-            description = "Importa ativos a partir do arquivo .xlsx de 'Posição' exportado pela Área do Investidor da B3",
+            description = """
+                    Importa ativos a partir do arquivo .xlsx de 'Posição' exportado pela Área do Investidor da B3.
+
+                    Cada linha é casada pelo código da posição ('Código de Negociação' em Ações e Fundo de \
+                    Investimento, 'Código' em Renda Fixa, 'Código ISIN' em Tesouro Direto), e não pelo nome do \
+                    produto — duas aplicações no mesmo papel são ativos distintos. Ativo importado antes desse \
+                    comportamento existir (sem `externalCode`) é adotado pelo nome no primeiro import.
+
+                    `sheets` traz a reconciliação por aba: `totalRead` é o que foi lido do arquivo e \
+                    `totalPersisted` o que virou ativo. Os dois divergirem significa que linhas distintas \
+                    colapsaram no mesmo ativo.
+
+                    `missing` lista ativos de um import anterior que não estão no arquivo (vendidos, vencidos, \
+                    ou extrato parcial). O import nunca apaga nada — a exclusão é decisão do usuário.""",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Import processado (ver `created`/`updated`/`errors`)"),
+                    @ApiResponse(responseCode = "200", description = "Import processado (ver `created`/`updated`/`missing`/`errors`/`sheets`)"),
                     @ApiResponse(responseCode = "400", description = "Arquivo vazio ou não é um .xlsx válido",
                             content = @Content)
             }
