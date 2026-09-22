@@ -120,8 +120,10 @@ Scheduled job (`RecurringTransactionJob`) runs outside the request cycle, writin
 
 1. `RecurringTransactionJob.generateMonthlyTransactions` fires on cron `0 0 0 1 * *` (midnight, 1st of month) via Spring's `@Scheduled` (requires `@EnableScheduling` on `AqueBackendApplication`).
 2. Loads all active `RecurringTransaction`s (`RecurringTransactionRepository.findByActiveTrue`).
-3. For each, checks idempotency via `TransactionRepository.existsByRecurringIdAndReferenceMonthAndReferenceYear` to avoid duplicate generation.
-4. Builds a new `Transaction` from the recurring template and saves it; per-item failures are caught and logged so one bad recurring rule doesn't abort the batch (`src/main/java/com/aque/recurring/RecurringTransactionJob.java:55`).
+3. For each, checks idempotency via `RecurringGenerationRepository.existsByRecurringIdAndReferenceMonthAndReferenceYear` — a `recurring_generations` ledger row marks "this recurring already produced an instance for this month/year".
+4. Builds a new `Transaction` from the recurring template, saves it, and records the ledger row; per-item failures are caught and logged so one bad recurring rule doesn't abort the batch (`src/main/java/com/aque/recurring/RecurringTransactionJob.java:55`).
+
+**Ledger lifecycle:** `TransactionService.delete` clears the matching `recurring_generations` row whenever the deleted `Transaction` came from a recurring (`recurringId != null`), so deleting a generated instance reopens that month for generation. Without it the month stays flagged as generated with no instance behind it, and the recurring is skipped forever. Note the link is `recurringId` + the transaction's *current* reference month/year — an instance moved to another month and only then deleted clears the ledger of the month it was moved to.
 
 **State management:** No in-memory application state; all state is in Postgres. Auth state is entirely stateless (JWT), no server-side sessions.
 
