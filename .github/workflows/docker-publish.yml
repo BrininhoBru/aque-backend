@@ -3,6 +3,7 @@
 #
 # Dispara automaticamente a cada push na branch main.
 # A imagem é publicada em: ghcr.io/brininhobru/aque-backend:latest
+# A imagem é multi-arch: linux/amd64 (nativo no runner) + linux/arm64 (via QEMU).
 # =============================================================================
 
 name: Build e Publish — Backend
@@ -18,7 +19,7 @@ env:
 
 jobs:
   build-and-push:
-    name: Build e Push da imagem ARM64
+    name: Build e Push da imagem multi-arch
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -56,7 +57,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/arm64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
