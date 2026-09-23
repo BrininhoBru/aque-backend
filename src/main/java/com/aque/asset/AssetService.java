@@ -94,7 +94,10 @@ public class AssetService {
 
         ImportTally tally = new ImportTally();
 
-        try (XSSFWorkbook workbook = new XSSFWorkbook(file.getInputStream())) {
+        // abrir e percorrer são erros de natureza diferente: não abrir é arquivo do usuário
+        // (400), quebrar no meio do laço é problema nosso. Um catch só pros dois fazia todo
+        // erro de banco se apresentar como "arquivo corrompido"
+        try (XSSFWorkbook workbook = openWorkbook(file)) {
             for (Sheet sheet : workbook) {
                 AssetType type = resolveAssetType(sheet.getSheetName());
                 if (type == null) {
@@ -104,8 +107,9 @@ public class AssetService {
 
                 importSheet(sheet, type, tally);
             }
-        } catch (IOException | RuntimeException e) {
-            throw new BusinessException("Arquivo não é um .xlsx de Posição da B3 válido", HttpStatus.BAD_REQUEST);
+        } catch (IOException e) {
+            // só o close() do try-with-resources chega aqui; o import já terminou
+            log.warn("Falha ao fechar o arquivo de posição importado", e);
         }
 
         return new AssetImportResponse(
@@ -117,6 +121,21 @@ public class AssetService {
                 sumOf(tally.sheets, AssetImportSheetSummary::totalRead),
                 sumOf(tally.sheets, AssetImportSheetSummary::totalPersisted)
         );
+    }
+
+    /**
+     * O POI lança de tudo para arquivo corrompido — {@code POIXMLException},
+     * {@code NotOfficeXmlFileException}, {@code IllegalArgumentException} — então aqui o
+     * catch é largo de propósito. Mas ele cobre só a abertura: o que falhar durante o
+     * import não passa por aqui e não vira "arquivo inválido".
+     */
+    private XSSFWorkbook openWorkbook(MultipartFile file) {
+        try {
+            return new XSSFWorkbook(file.getInputStream());
+        } catch (IOException | RuntimeException e) {
+            log.warn("Arquivo enviado não pôde ser lido como .xlsx de Posição da B3", e);
+            throw new BusinessException("Arquivo não é um .xlsx de Posição da B3 válido", HttpStatus.BAD_REQUEST);
+        }
     }
 
     private void importSheet(Sheet sheet, AssetType type, ImportTally tally) {
@@ -189,30 +208,20 @@ public class AssetService {
                 continue;
             }
 
-            totalRead = totalRead.add(currentValue);
-            rows++;
-
-            Asset existing = findExisting(externalCode, sanitizedName, type);
-            if (existing != null) {
-                existing.setName(sanitizedName);
-                existing.setCurrentValue(currentValue);
-                if (externalCode != null) {
-                    existing.setExternalCode(externalCode);
-                }
-                Asset saved = assetRepository.save(existing);
+            // isola a falha inesperada: uma linha que o banco recusa (nome acima do
+            // VARCHAR(255), por exemplo) não pode derrubar as outras nem se disfarçar de
+            // arquivo corrompido. As validações acima tratam linha *prevista* como ruim;
+            // isto aqui trata o que não se previu. Mesmo padrão do RecurringTransactionJob
+            try {
+                Asset saved = upsert(externalCode, sanitizedName, type, currentValue, tally);
                 persisted.put(saved.getId(), currentValue);
-                tally.updated.add(AssetResponse.from(saved));
-                continue;
+                totalRead = totalRead.add(currentValue);
+                rows++;
+            } catch (RuntimeException e) {
+                log.error("Falha ao gravar a linha {} da aba {}", rowIndex + 1, sheet.getSheetName(), e);
+                tally.errors.add(new AssetImportError(sheet.getSheetName(), rowIndex + 1,
+                        "Não foi possível gravar esta linha: " + e.getClass().getSimpleName(), false));
             }
-
-            Asset asset = new Asset();
-            asset.setName(sanitizedName);
-            asset.setType(type);
-            asset.setCurrentValue(currentValue);
-            asset.setExternalCode(externalCode);
-            Asset saved = assetRepository.save(asset);
-            persisted.put(saved.getId(), currentValue);
-            tally.created.add(AssetResponse.from(saved));
         }
 
         BigDecimal totalPersisted = persisted.values().stream()
@@ -232,6 +241,31 @@ public class AssetService {
         }
 
         tally.sheets.add(new AssetImportSheetSummary(sheet.getSheetName(), rows, totalRead, totalPersisted));
+    }
+
+    /** Grava a linha, criando ou atualizando, e registra o resultado no acumulador. */
+    private Asset upsert(String externalCode, String name, AssetType type, BigDecimal currentValue, ImportTally tally) {
+        Asset existing = findExisting(externalCode, name, type);
+
+        if (existing != null) {
+            existing.setName(name);
+            existing.setCurrentValue(currentValue);
+            if (externalCode != null) {
+                existing.setExternalCode(externalCode);
+            }
+            Asset saved = assetRepository.save(existing);
+            tally.updated.add(AssetResponse.from(saved));
+            return saved;
+        }
+
+        Asset asset = new Asset();
+        asset.setName(name);
+        asset.setType(type);
+        asset.setCurrentValue(currentValue);
+        asset.setExternalCode(externalCode);
+        Asset saved = assetRepository.save(asset);
+        tally.created.add(AssetResponse.from(saved));
+        return saved;
     }
 
     /**

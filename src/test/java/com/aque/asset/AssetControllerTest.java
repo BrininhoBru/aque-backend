@@ -296,6 +296,53 @@ class AssetControllerTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(5));
     }
 
+    @Test
+    void importarPosicaoB3_linhaRecusadaPeloBanco_importaAsOutrasEReportaAQuebrada() throws Exception {
+        // gatilho de verdade, não mock: o VARCHAR(255) da V7 recusa este nome. Antes da #40
+        // isso derrubava o import inteiro com 400 "arquivo inválido" — e o que já tinha sido
+        // gravado antes da linha ruim ficava no banco
+        MockMultipartFile file = posicaoAcoesComProdutoLongo();
+
+        mockMvc.perform(multipart("/assets/import")
+                        .file(file)
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.created.length()").value(1))
+                .andExpect(jsonPath("$.created[0].name").value("XPTO3 - XPTO S.A."))
+                .andExpect(jsonPath("$.errors.length()").value(1))
+                .andExpect(jsonPath("$.errors[0].isInformational").value(false));
+
+        // a linha boa persistiu de verdade: 2 do fixture + 1 importada
+        mockMvc.perform(get("/assets").header("Authorization", token))
+                .andExpect(jsonPath("$.length()").value(3));
+    }
+
+    private MockMultipartFile posicaoAcoesComProdutoLongo() throws Exception {
+        byte[] xlsx;
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Acoes");
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("Produto");
+            header.createCell(1).setCellValue("Código de Negociação");
+            header.createCell(2).setCellValue("Valor Atualizado");
+
+            Row valida = sheet.createRow(1);
+            valida.createCell(0).setCellValue("XPTO3 - XPTO S.A.");
+            valida.createCell(1).setCellValue("XPTO3");
+            valida.createCell(2).setCellValue(290.20);
+
+            Row longa = sheet.createRow(2);
+            longa.createCell(0).setCellValue("X".repeat(300));
+            longa.createCell(1).setCellValue("XPTO4");
+            longa.createCell(2).setCellValue(109.80);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            wb.write(out);
+            xlsx = out.toByteArray();
+        }
+        return new MockMultipartFile("file", "posicao.xlsx", null, xlsx);
+    }
+
     private MockMultipartFile posicaoRendaFixaFile() throws Exception {
         byte[] xlsx;
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
